@@ -1,5 +1,6 @@
 package com.harryio.storj;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -11,8 +12,8 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
-import com.harryio.storj.model.SignUpResult;
 import com.harryio.storj.model.User;
+import com.harryio.storj.model.UserStatus;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -75,7 +76,7 @@ public class SignUpActivity extends AppCompatActivity {
         }
     }
 
-    private class RegisterUserTask extends AsyncTask<Void, Void, SignUpResult> {
+    private class RegisterUserTask extends AsyncTask<Void, Void, UserStatus> {
         String email, password;
 
         RegisterUserTask(String email, String password) {
@@ -93,18 +94,18 @@ public class SignUpActivity extends AppCompatActivity {
         }
 
         @Override
-        protected SignUpResult doInBackground(Void... params) {
+        protected UserStatus doInBackground(Void... params) {
             try {
                 //Hex encode SHA-256 digest of password
                 password = SHA.hash256(password);
                 User user = new User(email, password);
 
                 StorjService storjService = StorjServiceProvider.getInstance();
-                Call<SignUpResult> signUpResultCall = storjService.registerUser(user);
+                Call<UserStatus> signUpResultCall = storjService.registerUser(user);
 
-                Response<SignUpResult> response = signUpResultCall.execute();
+                Response<UserStatus> response = signUpResultCall.execute();
                 if (response.isSuccessful()) {
-                    final SignUpResult result = response.body();
+                    final UserStatus result = response.body();
                     Log.d(TAG, "SignUp request successful:\n" + result.toString());
                     return result;
                 } else {
@@ -122,15 +123,17 @@ public class SignUpActivity extends AppCompatActivity {
         }
 
         @Override
-        protected void onPostExecute(SignUpResult signUpResult) {
-            super.onPostExecute(signUpResult);
+        protected void onPostExecute(UserStatus userStatus) {
+            super.onPostExecute(userStatus);
 
-            if (signUpResult == null) {
+            if (userStatus == null) {
                 //Show signup form again as call is failed
                 signupView.setVisibility(View.VISIBLE);
                 progressBar.setVisibility(View.GONE);
             } else {
-
+                Intent intent = new Intent(SignUpActivity.this, ActivateAccountActivity.class);
+                startActivity(intent);
+                finish();
             }
         }
     }

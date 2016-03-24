@@ -5,4 +5,7 @@
     <string name="error_email_empty">Email cannot be null</string>
     <string name="error_invalid_email">Invalid email address</string>
     <string name="error_empty_password">Password cannot be null</string>
+    <string name="later">Later</string>
+    <string name="activate">Activate</string>
+    <string name="error_empty_token">Token cannot be empty</string>
 </resources>

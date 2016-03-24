@@ -1,6 +1,6 @@
 package com.harryio.storj.model;
 
-public class SignUpResult {
+public class UserStatus {
     public String email;
     public String created;
     public boolean activated;
