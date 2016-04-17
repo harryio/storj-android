@@ -15,6 +15,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
     private File[] imageFiles;
     private LayoutInflater layoutInflater;
     private Context context;
+    private OnItemClickListener onItemClickListener;
 
     public ImageAdapter(Context context, File[] imageFiles) {
         this.context = context;
@@ -26,16 +27,23 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
     static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView imageView;
 
-        public ViewHolder(View itemView) {
+        public ViewHolder(View itemView, final OnItemClickListener onItemClickListener) {
             super(itemView);
             imageView = (ImageView) itemView;
+
+            imageView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    onItemClickListener.onItemClick(getAdapterPosition());
+                }
+            });
         }
     }
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = layoutInflater.inflate(R.layout.image_list_view, parent, false);
-        return new ViewHolder(view);
+        return new ViewHolder(view, onItemClickListener);
     }
 
     @Override
@@ -51,5 +59,13 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
     @Override
     public int getItemCount() {
         return imageFiles.length;
+    }
+
+    public void setOnItemClickListener(OnItemClickListener onItemClickListener) {
+        this.onItemClickListener = onItemClickListener;
+    }
+
+    interface OnItemClickListener {
+        void onItemClick(int position);
     }
 }

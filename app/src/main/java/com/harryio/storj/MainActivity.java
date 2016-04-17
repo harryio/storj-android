@@ -31,7 +31,7 @@ import static android.os.Environment.DIRECTORY_PICTURES;
 import static android.os.Environment.getExternalStoragePublicDirectory;
 
 @RuntimePermissions
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements ImageAdapter.OnItemClickListener {
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int REQUEST_CODE_CAPTURE_IMAGE = 100;
 
@@ -60,8 +60,16 @@ public class MainActivity extends AppCompatActivity {
         if (imageFolder != null) {
             File[] imageFiles = imageFolder.listFiles();
             ImageAdapter adapter = new ImageAdapter(this, imageFiles);
+            adapter.setOnItemClickListener(this);
             recyclerView.setAdapter(adapter);
         }
+    }
+
+    @Override
+    public void onItemClick(int position) {
+        Intent intent = ImageDetailActivity.getCallingIntent(this,
+                imageFolder.listFiles(), position);
+        startActivity(intent);
     }
 
     @NeedsPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -80,6 +88,7 @@ public class MainActivity extends AppCompatActivity {
 
                     if (imageFolder != null) {
                         ImageAdapter adapter = new ImageAdapter(this, imageFolder.listFiles());
+                        adapter.setOnItemClickListener(this);
                         recyclerView.swapAdapter(adapter, false);
                     }
                     break;
