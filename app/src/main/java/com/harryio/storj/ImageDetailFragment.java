@@ -53,7 +53,7 @@ public class ImageDetailFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         imageView = (ImageView)
-                inflater.inflate(R.layout.fragment_blank, container, false);
+                inflater.inflate(R.layout.fragment_image_detail, container, false);
 
         return imageView;
     }

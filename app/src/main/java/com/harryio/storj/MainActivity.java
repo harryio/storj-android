@@ -1,6 +1,7 @@
 package com.harryio.storj;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
@@ -9,14 +10,24 @@ import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.SparseBooleanArray;
+import android.view.ActionMode;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.Toast;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import butterknife.Bind;
@@ -41,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
     GridView imageList;
 
     private File imageFolder;
+    private ProgressDialog deleteProgressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,13 +73,112 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+        imageList.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE_MODAL);
+        imageList.setMultiChoiceModeListener(new GridView.MultiChoiceModeListener() {
+            @Override
+            public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+                MenuInflater menuInflater = mode.getMenuInflater();
+                menuInflater.inflate(R.menu.context_menu, menu);
+                mode.setTitle("Select photos");
+                mode.setSubtitle("One item selected");
+                return true;
+            }
+
+            @Override
+            public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
+                int selectCount = imageList.getCheckedItemCount();
+                switch (selectCount) {
+                    case 0:
+                        //Do nothing
+                        break;
+
+                    case 1:
+                        mode.setSubtitle("One item selected");
+                        break;
+
+                    default:
+                        mode.setSubtitle(selectCount + " photos selected");
+                }
+            }
+
+            @Override
+            public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+                return false;
+            }
+
+            @Override
+            public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.menu_action_delete:
+                        SparseBooleanArray checkedItemPositions = imageList.getCheckedItemPositions();
+                        int size = imageList.getCheckedItemCount();
+                        ArrayList<File> files = new ArrayList<>(size);
+
+                        for (int i = 0; i < checkedItemPositions.size(); ++i) {
+                            int key = checkedItemPositions.keyAt(i);
+                            if (checkedItemPositions.get(key)) {
+                                File image = (File) imageList.getItemAtPosition(key);
+                                if (image != null) {
+                                    files.add(image);
+                                }
+                            }
+                        }
+
+                        if (!files.isEmpty()) {
+                            deleteFiles(files);
+                        }
+
+                        mode.finish();
+                        break;
+
+                    case R.id.menu_action_upload:
+                        //todo upload items here
+                        mode.finish();
+                        break;
+                }
+
+                return true;
+            }
+
+            @Override
+            public void onDestroyActionMode(ActionMode mode) {
+
+            }
+        });
+
         File imageFolder = getImageFolder();
 
         if (imageFolder != null) {
-            File[] imageFiles = imageFolder.listFiles();
-            ImageGridAdapter adapter = new ImageGridAdapter(this, imageFiles);
-            imageList.setAdapter(adapter);
+            setImageGridAdapter();
         }
+    }
+
+    private void deleteFiles(ArrayList<File> toBeDeletedFiles) {
+        deleteProgressDialog = new ProgressDialog(this);
+        deleteProgressDialog.setTitle("Deleting Files");
+        deleteProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        deleteProgressDialog.setCancelable(false);
+        deleteProgressDialog.setIndeterminate(false);
+        deleteProgressDialog.setMax(toBeDeletedFiles.size());
+        deleteProgressDialog.setProgress(0);
+
+        final int size = toBeDeletedFiles.size();
+        for (int i = 0; i < size; i++) {
+            File file = toBeDeletedFiles.get(i);
+            boolean isDeleted = file.delete();
+
+            if (!isDeleted) {
+                showMessage("Delete Failed: " + file.getName());
+            }
+
+            deleteProgressDialog.setProgress(i);
+        }
+
+        setImageGridAdapter();
+    }
+
+    private void showMessage(String message) {
+        Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
     }
 
     @NeedsPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -83,11 +194,7 @@ public class MainActivity extends AppCompatActivity {
             switch (requestCode) {
                 case REQUEST_CODE_CAPTURE_IMAGE:
                     //todo upload camera image here
-
-                    if (imageFolder != null) {
-                        ImageGridAdapter adapter = new ImageGridAdapter(this, imageFolder.listFiles());
-                        imageList.setAdapter(adapter);
-                    }
+                    setImageGridAdapter();
                     break;
             }
         }
@@ -169,5 +276,13 @@ public class MainActivity extends AppCompatActivity {
     @OnPermissionDenied(Manifest.permission.WRITE_EXTERNAL_STORAGE)
     void showDeniedPermissionMessage() {
         Toast.makeText(MainActivity.this, "Permission Denied", Toast.LENGTH_SHORT).show();
+    }
+
+    private void setImageGridAdapter() {
+        File[] imageFiles = imageFolder.listFiles();
+        List<File> imageFileList = Arrays.asList(imageFiles);
+        Collections.reverse(imageFileList);
+        ImageGridAdapter gridAdapter = new ImageGridAdapter(this, imageFileList);
+        imageList.setAdapter(gridAdapter);
     }
 }
