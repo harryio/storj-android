@@ -24,10 +24,7 @@ import android.widget.Toast;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 
 import butterknife.Bind;
@@ -149,7 +146,8 @@ public class MainActivity extends AppCompatActivity {
         File imageFolder = getImageFolder();
 
         if (imageFolder != null) {
-            setImageGridAdapter();
+            ImageGridAdapter imageGridAdapter = new ImageGridAdapter(this, imageFolder);
+            imageList.setAdapter(imageGridAdapter);
         }
     }
 
@@ -173,8 +171,6 @@ public class MainActivity extends AppCompatActivity {
 
             deleteProgressDialog.setProgress(i);
         }
-
-        setImageGridAdapter();
     }
 
     private void showMessage(String message) {
@@ -194,7 +190,6 @@ public class MainActivity extends AppCompatActivity {
             switch (requestCode) {
                 case REQUEST_CODE_CAPTURE_IMAGE:
                     //todo upload camera image here
-                    setImageGridAdapter();
                     break;
             }
         }
@@ -276,13 +271,5 @@ public class MainActivity extends AppCompatActivity {
     @OnPermissionDenied(Manifest.permission.WRITE_EXTERNAL_STORAGE)
     void showDeniedPermissionMessage() {
         Toast.makeText(MainActivity.this, "Permission Denied", Toast.LENGTH_SHORT).show();
-    }
-
-    private void setImageGridAdapter() {
-        File[] imageFiles = imageFolder.listFiles();
-        List<File> imageFileList = Arrays.asList(imageFiles);
-        Collections.reverse(imageFileList);
-        ImageGridAdapter gridAdapter = new ImageGridAdapter(this, imageFileList);
-        imageList.setAdapter(gridAdapter);
     }
 }

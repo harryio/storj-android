@@ -10,18 +10,19 @@ import android.widget.ImageView;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
-import java.util.List;
 
 public class ImageGridAdapter extends ArrayAdapter<File> {
     private LayoutInflater layoutInflater;
     private Context context;
+    File imageFolder;
 
-    public ImageGridAdapter(Context context, List<File> imageFileList) {
-        super(context, 0, imageFileList);
+    public ImageGridAdapter(Context context, File imageFolder) {
+        super(context, 0);
 
         this.context = context;
         this.layoutInflater = (LayoutInflater)
                 context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        this.imageFolder = imageFolder;
     }
 
     @Override
@@ -48,5 +49,15 @@ public class ImageGridAdapter extends ArrayAdapter<File> {
 
     private static class ViewHolder {
         ImageView imageView;
+    }
+
+    @Override
+    public int getCount() {
+        return imageFolder.listFiles().length;
+    }
+
+    @Override
+    public File getItem(int position) {
+        return imageFolder.listFiles()[position];
     }
 }

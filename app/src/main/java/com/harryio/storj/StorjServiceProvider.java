@@ -10,7 +10,7 @@ public class StorjServiceProvider {
         if (storjService == null) {
 
             Retrofit retrofit = new Retrofit.Builder()
-                    .baseUrl("https://api.metadisk.org")
+                    .baseUrl("https://app.storj.io")
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
 

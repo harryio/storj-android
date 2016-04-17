@@ -24,4 +24,16 @@ public interface StorjService {
             "Accept: application/json"
     })
     Call<UserStatus> activateAccount(@Path("token") String token);
+
+    @POST("/keys")
+    @Headers({
+            "Content-Type: application/json"
+    })
+    Call<Void> registerKey(@Body Key key);
+
+    @GET("/keys")
+    @Headers({
+            "Content-Type: application/json"
+    })
+    Call<Void> getKeys();
 }
