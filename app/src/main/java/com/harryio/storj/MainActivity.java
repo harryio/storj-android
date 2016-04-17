@@ -9,9 +9,9 @@ import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.GridView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -31,14 +31,14 @@ import static android.os.Environment.DIRECTORY_PICTURES;
 import static android.os.Environment.getExternalStoragePublicDirectory;
 
 @RuntimePermissions
-public class MainActivity extends AppCompatActivity implements ImageAdapter.OnItemClickListener {
+public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int REQUEST_CODE_CAPTURE_IMAGE = 100;
 
     private static final String IMAGE_DIRECTORY_NAME = "Storj";
 
-    @Bind(R.id.recyclerView)
-    RecyclerView recyclerView;
+    @Bind(R.id.imageList)
+    GridView imageList;
 
     private File imageFolder;
 
@@ -49,27 +49,25 @@ public class MainActivity extends AppCompatActivity implements ImageAdapter.OnIt
         ButterKnife.bind(this);
 
         MainActivityPermissionsDispatcher.setUpImageFolderWithCheck(this);
-        setUpRecyclerView();
+        setUpGridView();
     }
 
-    private void setUpRecyclerView() {
-        recyclerView.setHasFixedSize(true);
-        recyclerView.setLayoutManager(new GridLayoutManager(this, 3));
+    private void setUpGridView() {
+        imageList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent = ImageDetailActivity.getCallingIntent(MainActivity.this,
+                        imageFolder.listFiles(), position);
+                startActivity(intent);
+            }
+        });
         File imageFolder = getImageFolder();
 
         if (imageFolder != null) {
             File[] imageFiles = imageFolder.listFiles();
-            ImageAdapter adapter = new ImageAdapter(this, imageFiles);
-            adapter.setOnItemClickListener(this);
-            recyclerView.setAdapter(adapter);
+            ImageGridAdapter adapter = new ImageGridAdapter(this, imageFiles);
+            imageList.setAdapter(adapter);
         }
-    }
-
-    @Override
-    public void onItemClick(int position) {
-        Intent intent = ImageDetailActivity.getCallingIntent(this,
-                imageFolder.listFiles(), position);
-        startActivity(intent);
     }
 
     @NeedsPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -87,9 +85,8 @@ public class MainActivity extends AppCompatActivity implements ImageAdapter.OnIt
                     //todo upload camera image here
 
                     if (imageFolder != null) {
-                        ImageAdapter adapter = new ImageAdapter(this, imageFolder.listFiles());
-                        adapter.setOnItemClickListener(this);
-                        recyclerView.swapAdapter(adapter, false);
+                        ImageGridAdapter adapter = new ImageGridAdapter(this, imageFolder.listFiles());
+                        imageList.setAdapter(adapter);
                     }
                     break;
             }
