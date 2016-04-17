@@ -8,4 +8,5 @@
     <string name="later">Later</string>
     <string name="activate">Activate</string>
     <string name="error_empty_token">Token cannot be empty</string>
+    <string name="take_picture">Take Picture</string>
 </resources>
