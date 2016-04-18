@@ -132,6 +132,13 @@ public class MainActivity extends AppCompatActivity {
                         //todo upload items here
                         mode.finish();
                         break;
+
+                    case R.id.menu_action_select_all:
+                        int count = imageList.getAdapter().getCount();
+                        for (int i = 0; i < count; i++) {
+                            imageList.setItemChecked(i, true);
+                        }
+                        break;
                 }
 
                 return true;
