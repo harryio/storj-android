@@ -1,9 +1,11 @@
 package com.harryio.storj;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -73,25 +75,34 @@ public class ImageDetailActivity extends AppCompatActivity {
     }
 
     public void deleteImage() {
-        int currentIndex = viewPager.getCurrentItem();
+        new AlertDialog.Builder(this)
+                .setMessage("Delete this photo?")
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        int currentIndex = viewPager.getCurrentItem();
 
-        File file = viewPagerAdapter.getFile(currentIndex);
-        boolean isDeleted = file.delete();
+                        File file = viewPagerAdapter.getFile(currentIndex);
+                        boolean isDeleted = file.delete();
 
-        if (!isDeleted) {
-            showMessage(file.getName() + " delete failed");
-        } else {
-            if (viewPagerAdapter.getCount() - 1 == 0) {
-                finish();
-                return;
-            }
+                        if (!isDeleted) {
+                            showMessage(file.getName() + " delete failed");
+                        } else {
+                            if (viewPagerAdapter.getCount() - 1 == 0) {
+                                finish();
+                                return;
+                            }
 
-            viewPagerAdapter.removeItem(viewPager, currentIndex);
-            if (currentIndex == viewPagerAdapter.getCount())
-                currentIndex--;
+                            viewPagerAdapter.removeItem(viewPager, currentIndex);
+                            if (currentIndex == viewPagerAdapter.getCount())
+                                currentIndex--;
 
-            viewPager.setCurrentItem(currentIndex);
-        }
+                            viewPager.setCurrentItem(currentIndex);
+                        }
+                    }
+                })
+                .setNegativeButton(android.R.string.no, null)
+                .show();
     }
 
     private void showMessage(String message) {

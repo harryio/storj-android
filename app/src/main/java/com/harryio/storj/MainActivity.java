@@ -122,10 +122,9 @@ public class MainActivity extends AppCompatActivity {
                         }
 
                         if (!files.isEmpty()) {
-                            deleteFiles(files);
+                            deleteFiles(files, mode);
                         }
 
-                        mode.finish();
                         break;
 
                     case R.id.menu_action_upload:
@@ -158,26 +157,42 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void deleteFiles(ArrayList<File> toBeDeletedFiles) {
-        deleteProgressDialog = new ProgressDialog(this);
-        deleteProgressDialog.setTitle("Deleting Files");
-        deleteProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        deleteProgressDialog.setCancelable(false);
-        deleteProgressDialog.setIndeterminate(false);
-        deleteProgressDialog.setMax(toBeDeletedFiles.size());
-        deleteProgressDialog.setProgress(0);
+    private void deleteFiles(final ArrayList<File> toBeDeletedFiles, final ActionMode mode) {
+        String message = toBeDeletedFiles.size() == 1 ? "Are you sure you want to " +
+                "delete this item?" : "Are you sure you want to delete selected items?";
 
-        final int size = toBeDeletedFiles.size();
-        for (int i = 0; i < size; i++) {
-            File file = toBeDeletedFiles.get(i);
-            boolean isDeleted = file.delete();
+        new AlertDialog.Builder(this)
+                .setMessage(message)
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        deleteProgressDialog = new ProgressDialog(MainActivity.this);
+                        deleteProgressDialog.setTitle("Deleting Files");
+                        deleteProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                        deleteProgressDialog.setCancelable(false);
+                        deleteProgressDialog.setIndeterminate(false);
+                        deleteProgressDialog.setMax(toBeDeletedFiles.size());
+                        deleteProgressDialog.setProgress(0);
+                        deleteProgressDialog.show();
 
-            if (!isDeleted) {
-                showMessage("Delete Failed: " + file.getName());
-            }
+                        final int size = toBeDeletedFiles.size();
+                        for (int i = 0; i < size; i++) {
+                            File file = toBeDeletedFiles.get(i);
+                            boolean isDeleted = file.delete();
 
-            deleteProgressDialog.setProgress(i);
-        }
+                            if (!isDeleted) {
+                                showMessage("Delete Failed: " + file.getName());
+                            }
+
+                            deleteProgressDialog.setProgress(i + 1);
+                        }
+
+                        deleteProgressDialog.dismiss();
+                        mode.finish();
+                    }
+                })
+                .setNegativeButton(android.R.string.no, null)
+                .show();
     }
 
     private void showMessage(String message) {
