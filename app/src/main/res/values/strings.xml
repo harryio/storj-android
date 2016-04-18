@@ -12,4 +12,6 @@
     <string name="delete">Delete</string>
     <string name="upload">Upload</string>
     <string name="select_all">Select All</string>
+    <string name="empty_image_grid_hint">Tap the camera button below to take photos</string>
+    <string name="no_photos">No photos</string>
 </resources>

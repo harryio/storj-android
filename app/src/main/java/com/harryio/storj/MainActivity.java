@@ -19,6 +19,7 @@ import android.view.View;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.GridView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import java.io.File;
@@ -47,9 +48,12 @@ public class MainActivity extends AppCompatActivity {
 
     @Bind(R.id.imageList)
     GridView imageList;
+    @Bind(R.id.empty_view)
+    LinearLayout emptyView;
 
     private File imageFolder;
     private ProgressDialog deleteProgressDialog;
+    private ImageGridAdapter imageGridAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+        imageList.setEmptyView(emptyView);
         imageList.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE_MODAL);
         imageList.setMultiChoiceModeListener(new GridView.MultiChoiceModeListener() {
             @Override
@@ -152,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
         File imageFolder = getImageFolder();
 
         if (imageFolder != null) {
-            ImageGridAdapter imageGridAdapter = new ImageGridAdapter(this, imageFolder);
+            imageGridAdapter = new ImageGridAdapter(this, imageFolder);
             imageList.setAdapter(imageGridAdapter);
         }
     }
@@ -293,5 +298,12 @@ public class MainActivity extends AppCompatActivity {
     @OnPermissionDenied(Manifest.permission.WRITE_EXTERNAL_STORAGE)
     void showDeniedPermissionMessage() {
         Toast.makeText(MainActivity.this, "Permission Denied", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        imageGridAdapter.notifyDataSetChanged();
     }
 }

@@ -26,4 +26,8 @@
         android:src="@drawable/ic_camera"
         android:onClick="onClick" />
 
+    <include
+        android:id="@+id/empty_view"
+        layout="@layout/image_grid_empty_view" />
+
 </FrameLayout>
