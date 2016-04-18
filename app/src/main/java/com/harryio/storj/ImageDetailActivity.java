@@ -5,6 +5,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.widget.Toast;
 
 import java.io.File;
 
@@ -12,6 +16,7 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 
 public class ImageDetailActivity extends AppCompatActivity {
+    private static final String TAG = ImageDetailActivity.class.getSimpleName();
     private static final String ARG_IMAGE_FILES = "IMAGE_FILES";
     private static final String ARG_SELECTED_POSITION = "SELECTED_POSITION";
 
@@ -19,7 +24,7 @@ public class ImageDetailActivity extends AppCompatActivity {
     ViewPager viewPager;
 
     private File[] imageFiles;
-    private int selectedPosition;
+    private ViewPagerAdapter viewPagerAdapter;
 
     public static Intent getCallingIntent(Context context, File[] imageFiles, int selectedPosition) {
         Intent intent = new Intent(context, ImageDetailActivity.class);
@@ -35,11 +40,61 @@ public class ImageDetailActivity extends AppCompatActivity {
         ButterKnife.bind(this);
 
         imageFiles = (File[]) getIntent().getExtras().get(ARG_IMAGE_FILES);
-        selectedPosition = getIntent().getIntExtra(ARG_SELECTED_POSITION, 0);
+        int selectedPosition = getIntent().getIntExtra(ARG_SELECTED_POSITION, 0);
 
-        ViewPagerAdapter viewPagerAdapter = new ViewPagerAdapter(getSupportFragmentManager(),
+        viewPagerAdapter = new ViewPagerAdapter(getSupportFragmentManager(),
                 imageFiles);
         viewPager.setAdapter(viewPagerAdapter);
         viewPager.setCurrentItem(selectedPosition);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater menuInflater = getMenuInflater();
+        menuInflater.inflate(R.menu.menu_image_detail_activity, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_action_delete:
+                deleteImage();
+                return true;
+
+            case R.id.menu_action_upload:
+                //todo upload image here
+                return true;
+
+            default: break;
+        }
+
+        return false;
+    }
+
+    public void deleteImage() {
+        int currentIndex = viewPager.getCurrentItem();
+
+        File file = viewPagerAdapter.getFile(currentIndex);
+        boolean isDeleted = file.delete();
+
+        if (!isDeleted) {
+            showMessage(file.getName() + " delete failed");
+        } else {
+            if (viewPagerAdapter.getCount() - 1 == 0) {
+                finish();
+                return;
+            }
+
+            viewPagerAdapter.removeItem(viewPager, currentIndex);
+            if (currentIndex == viewPagerAdapter.getCount())
+                currentIndex--;
+
+            viewPager.setCurrentItem(currentIndex);
+        }
+    }
+
+    private void showMessage(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 }

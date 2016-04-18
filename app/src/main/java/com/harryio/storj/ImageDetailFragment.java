@@ -12,17 +12,9 @@ import com.squareup.picasso.Picasso;
 
 import java.io.File;
 
-
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link ImageDetailFragment.OnFragmentInteractionListener} interface
- * to handle interaction events.
- */
 public class ImageDetailFragment extends Fragment {
     private static final String ARG_IMAGE_FILE = "IMAGE_FILE";
 
-    private OnFragmentInteractionListener mListener;
     private File file;
     private ImageView imageView;
 
@@ -67,25 +59,5 @@ public class ImageDetailFragment extends Fragment {
                 .fit()
                 .centerInside()
                 .into(imageView);
-    }
-
-    //    @Override
-//    public void onAttach(Context context) {
-//        super.onAttach(context);
-//        if (context instanceof OnFragmentInteractionListener) {
-//            mListener = (OnFragmentInteractionListener) context;
-//        } else {
-//            throw new RuntimeException(context.toString()
-//                    + " must implement OnFragmentInteractionListener");
-//        }
-//    }
-//
-//    @Override
-//    public void onDetach() {
-//        super.onDetach();
-//        mListener = null;
-//    }
-
-    public interface OnFragmentInteractionListener {
     }
 }
