@@ -1,4 +1,4 @@
-package com.harryio.storj;
+package com.harryio.storj.util;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

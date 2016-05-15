@@ -4,27 +4,26 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:fab="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
-    tools:context="com.harryio.storj.MainActivity">
+    tools:context=".ui.activity.MainActivity">
 
     <GridView
         android:id="@+id/imageList"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:numColumns="3"
         android:horizontalSpacing="2dp"
+        android:numColumns="3"
         android:verticalSpacing="2dp" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/take_picture_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/take_picture"
         android:layout_gravity="end|bottom"
         android:layout_margin="16dp"
+        android:onClick="onClick"
         android:src="@drawable/ic_camera"
-        android:onClick="onClick" />
+        android:text="@string/take_picture" />
 
     <include
         android:id="@+id/empty_view"

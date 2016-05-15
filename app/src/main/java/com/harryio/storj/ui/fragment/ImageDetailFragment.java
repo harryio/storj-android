@@ -1,4 +1,4 @@
-package com.harryio.storj;
+package com.harryio.storj.ui.fragment;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import com.harryio.storj.R;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
@@ -18,6 +19,10 @@ public class ImageDetailFragment extends Fragment {
     private File file;
     private ImageView imageView;
 
+    public ImageDetailFragment() {
+        // Required empty public constructor
+    }
+
     public static ImageDetailFragment newInstance(File file) {
 
         Bundle args = new Bundle();
@@ -26,10 +31,6 @@ public class ImageDetailFragment extends Fragment {
         ImageDetailFragment fragment = new ImageDetailFragment();
         fragment.setArguments(args);
         return fragment;
-    }
-
-    public ImageDetailFragment() {
-        // Required empty public constructor
     }
 
     @Override

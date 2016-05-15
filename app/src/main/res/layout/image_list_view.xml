@@ -7,7 +7,7 @@
     android:foreground="@drawable/image_list_item_selector"
     >
 
-    <com.harryio.storj.SquareImageView
+    <com.harryio.storj.ui.customview.SquareImageView
         android:id="@+id/imageView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

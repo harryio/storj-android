@@ -1,4 +1,4 @@
-package com.harryio.storj;
+package com.harryio.storj.ui.activity;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -11,6 +11,9 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.Toast;
+
+import com.harryio.storj.R;
+import com.harryio.storj.ui.adapter.ViewPagerAdapter;
 
 import java.io.File;
 

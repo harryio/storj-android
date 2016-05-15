@@ -1,5 +1,6 @@
-package com.harryio.storj;
+package com.harryio.storj.ui.activity;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -12,11 +13,21 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
+import com.harryio.storj.R;
+import com.harryio.storj.StorjService;
+import com.harryio.storj.StorjServiceProvider;
 import com.harryio.storj.model.User;
 import com.harryio.storj.model.UserStatus;
+import com.harryio.storj.util.SHA;
+import com.harryio.storj.util.SecurityUtils;
+import com.harryio.storj.util.SharedPrefUtils;
 
 import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -36,6 +47,10 @@ public class SignUpActivity extends AppCompatActivity {
     LinearLayout signupView;
     @Bind(R.id.progressBar)
     ProgressBar progressBar;
+
+    public static Intent getCallingIntent(Context context) {
+        return new Intent(context, SignUpActivity.class);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,7 +75,7 @@ public class SignUpActivity extends AppCompatActivity {
             emailEdittext.setError(getString(R.string.error_email_empty));
         }
         //Check for invalid email address
-        else if(!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+        else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             shouldProceed = false;
             emailEdittext.setError(getString(R.string.error_invalid_email));
         }
@@ -98,7 +113,9 @@ public class SignUpActivity extends AppCompatActivity {
             try {
                 //Hex encode SHA-256 digest of password
                 password = SHA.hash256(password);
-                User user = new User(email, password);
+                SecurityUtils securityUtils = SecurityUtils.instance();
+                PublicKey publicKey = securityUtils.getKeyPair().getPublic();
+                User user = new User(email, password, securityUtils.getPublicKeyAsString(publicKey));
 
                 StorjService storjService = StorjServiceProvider.getInstance();
                 Call<UserStatus> signUpResultCall = storjService.registerUser(user);
@@ -115,7 +132,7 @@ public class SignUpActivity extends AppCompatActivity {
             } catch (NoSuchAlgorithmException e) {
                 e.printStackTrace();
                 Log.e(TAG, "No algorithm found for \"SHA-256\"");
-            } catch (IOException e) {
+            } catch (InvalidAlgorithmParameterException | NoSuchProviderException | InvalidKeySpecException | IOException e) {
                 e.printStackTrace();
             }
 
@@ -127,11 +144,13 @@ public class SignUpActivity extends AppCompatActivity {
             super.onPostExecute(userStatus);
 
             if (userStatus == null) {
-                //Show signup form again as call is failed
+                //Show signup form again as call failed
                 signupView.setVisibility(View.VISIBLE);
                 progressBar.setVisibility(View.GONE);
             } else {
-                Intent intent = new Intent(SignUpActivity.this, ActivateAccountActivity.class);
+                SharedPrefUtils.instance(SignUpActivity.this)
+                        .storeBoolean(SharedPrefUtils.KEY_IS_USER_LOGGED_IN, true);
+                Intent intent = new Intent(SignUpActivity.this, MainActivity.class);
                 startActivity(intent);
                 finish();
             }

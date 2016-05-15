@@ -1,4 +1,4 @@
-package com.harryio.storj;
+package com.harryio.storj.ui.customview;
 
 import android.content.Context;
 import android.util.AttributeSet;
@@ -22,6 +22,7 @@ public class SquareImageView extends ImageView {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
         int width = getMeasuredWidth();
+        //noinspection SuspiciousNameCombination
         setMeasuredDimension(width, width);
     }
 }

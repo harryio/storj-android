@@ -1,4 +1,4 @@
-package com.harryio.storj;
+package com.harryio.storj.ui.adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -7,14 +7,15 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 
+import com.harryio.storj.R;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
 
 public class ImageGridAdapter extends ArrayAdapter<File> {
+    File imageFolder;
     private LayoutInflater layoutInflater;
     private Context context;
-    File imageFolder;
 
     public ImageGridAdapter(Context context, File imageFolder) {
         super(context, 0);
@@ -47,17 +48,18 @@ public class ImageGridAdapter extends ArrayAdapter<File> {
         return convertView;
     }
 
-    private static class ViewHolder {
-        ImageView imageView;
-    }
-
     @Override
     public int getCount() {
-        return imageFolder.listFiles().length;
+        final File[] files = imageFolder.listFiles();
+        return files == null ? 0 : files.length;
     }
 
     @Override
     public File getItem(int position) {
         return imageFolder.listFiles()[position];
+    }
+
+    private static class ViewHolder {
+        ImageView imageView;
     }
 }

@@ -1,9 +1,11 @@
-package com.harryio.storj;
+package com.harryio.storj.ui.adapter;
 
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
+
+import com.harryio.storj.ui.fragment.ImageDetailFragment;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -28,13 +30,13 @@ public class ViewPagerAdapter extends FragmentStatePagerAdapter {
         return imageFiles.size();
     }
 
-    void removeItem(ViewPager viewPager, int position) {
+    public void removeItem(ViewPager viewPager, int position) {
         viewPager.setAdapter(null);
         imageFiles.remove(position);
         viewPager.setAdapter(this);
     }
 
-    File getFile(int position) {
+    public File getFile(int position) {
         return imageFiles.get(position);
     }
 }

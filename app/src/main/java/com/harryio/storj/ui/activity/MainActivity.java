@@ -1,4 +1,4 @@
-package com.harryio.storj;
+package com.harryio.storj.ui.activity;
 
 import android.Manifest;
 import android.app.ProgressDialog;
@@ -21,6 +21,10 @@ import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
+
+import com.harryio.storj.R;
+import com.harryio.storj.ui.adapter.ImageGridAdapter;
+import com.harryio.storj.util.SharedPrefUtils;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -58,6 +62,13 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        boolean isLoggedIn = SharedPrefUtils.instance(this)
+                .getBoolean(SharedPrefUtils.KEY_IS_USER_LOGGED_IN, false);
+        if (!isLoggedIn) {
+            Intent intent = SignUpActivity.getCallingIntent(this);
+            startActivity(intent);
+            finish();
+        }
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
@@ -304,6 +315,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
-        imageGridAdapter.notifyDataSetChanged();
+        if (imageGridAdapter != null) {
+            imageGridAdapter.notifyDataSetChanged();
+
+        }
     }
 }
