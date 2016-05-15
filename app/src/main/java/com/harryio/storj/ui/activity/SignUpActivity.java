@@ -16,6 +16,7 @@ import android.widget.ProgressBar;
 import com.harryio.storj.R;
 import com.harryio.storj.StorjService;
 import com.harryio.storj.StorjServiceProvider;
+import com.harryio.storj.database.KeyPairDAO;
 import com.harryio.storj.model.User;
 import com.harryio.storj.model.UserStatus;
 import com.harryio.storj.util.SHA;
@@ -24,6 +25,7 @@ import com.harryio.storj.util.SharedPrefUtils;
 
 import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
+import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PublicKey;
@@ -114,7 +116,8 @@ public class SignUpActivity extends AppCompatActivity {
                 //Hex encode SHA-256 digest of password
                 password = SHA.hash256(password);
                 SecurityUtils securityUtils = SecurityUtils.instance();
-                PublicKey publicKey = securityUtils.getKeyPair().getPublic();
+                KeyPair keyPair = securityUtils.getKeyPair();
+                PublicKey publicKey = keyPair.getPublic();
                 User user = new User(email, password, securityUtils.getPublicKeyAsString(publicKey));
 
                 StorjService storjService = StorjServiceProvider.getInstance();
@@ -122,7 +125,10 @@ public class SignUpActivity extends AppCompatActivity {
 
                 Response<UserStatus> response = signUpResultCall.execute();
                 if (response.isSuccessful()) {
-                    final UserStatus result = response.body();
+                    UserStatus result = response.body();
+                    KeyPairDAO.getInstance(SignUpActivity.this).insert(keyPair);
+                    SharedPrefUtils.instance(SignUpActivity.this)
+                            .storeBoolean(SharedPrefUtils.KEY_IS_USER_LOGGED_IN, true);
                     Log.d(TAG, "SignUp request successful:\n" + result.toString());
                     return result;
                 } else {
@@ -148,8 +154,6 @@ public class SignUpActivity extends AppCompatActivity {
                 signupView.setVisibility(View.VISIBLE);
                 progressBar.setVisibility(View.GONE);
             } else {
-                SharedPrefUtils.instance(SignUpActivity.this)
-                        .storeBoolean(SharedPrefUtils.KEY_IS_USER_LOGGED_IN, true);
                 Intent intent = new Intent(SignUpActivity.this, MainActivity.class);
                 startActivity(intent);
                 finish();
