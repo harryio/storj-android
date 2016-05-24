@@ -12,16 +12,7 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.util.SparseBooleanArray;
 import android.view.ActionMode;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.AbsListView;
-import android.widget.AdapterView;
-import android.widget.GridView;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -31,7 +22,7 @@ import com.harryio.storj.StorjServiceProvider;
 import com.harryio.storj.database.KeyPairDAO;
 import com.harryio.storj.model.Bucket;
 import com.harryio.storj.model.BucketModel;
-import com.harryio.storj.ui.adapter.ImageGridAdapter;
+import com.harryio.storj.ui.fragment.BucketListFragment;
 import com.harryio.storj.util.Crypto;
 import com.harryio.storj.util.ECUtils;
 import com.harryio.storj.util.SharedPrefUtils;
@@ -47,10 +38,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 
-import butterknife.Bind;
 import butterknife.ButterKnife;
 import permissions.dispatcher.NeedsPermission;
 import permissions.dispatcher.OnPermissionDenied;
@@ -64,20 +53,15 @@ import static android.os.Environment.DIRECTORY_PICTURES;
 import static android.os.Environment.getExternalStoragePublicDirectory;
 
 @RuntimePermissions
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements
+        BucketListFragment.OnFragmentInteractionListener{
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int REQUEST_CODE_CAPTURE_IMAGE = 100;
 
     private static final String IMAGE_DIRECTORY_NAME = "Storj";
 
-    @Bind(R.id.imageList)
-    GridView imageList;
-    @Bind(R.id.empty_view)
-    LinearLayout emptyView;
-
     private File imageFolder;
     private ProgressDialog deleteProgressDialog;
-    private ImageGridAdapter imageGridAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,105 +80,9 @@ public class MainActivity extends AppCompatActivity {
             ButterKnife.bind(this);
 
             MainActivityPermissionsDispatcher.setUpImageFolderWithCheck(this);
-            setUpGridView();
-            new FetchBucketTask().execute();
-        }
-    }
-
-    private void setUpGridView() {
-        imageList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = ImageDetailActivity.getCallingIntent(MainActivity.this,
-                        imageFolder.listFiles(), position);
-                startActivity(intent);
-            }
-        });
-        imageList.setEmptyView(emptyView);
-        imageList.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE_MODAL);
-        imageList.setMultiChoiceModeListener(new GridView.MultiChoiceModeListener() {
-            @Override
-            public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-                MenuInflater menuInflater = mode.getMenuInflater();
-                menuInflater.inflate(R.menu.context_menu, menu);
-                mode.setTitle("Select photos");
-                mode.setSubtitle("One item selected");
-                return true;
-            }
-
-            @Override
-            public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
-                int selectCount = imageList.getCheckedItemCount();
-                switch (selectCount) {
-                    case 0:
-                        //Do nothing
-                        break;
-
-                    case 1:
-                        mode.setSubtitle("One item selected");
-                        break;
-
-                    default:
-                        mode.setSubtitle(selectCount + " photos selected");
-                }
-            }
-
-            @Override
-            public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-                return false;
-            }
-
-            @Override
-            public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-                switch (item.getItemId()) {
-                    case R.id.menu_action_delete:
-                        SparseBooleanArray checkedItemPositions = imageList.getCheckedItemPositions();
-                        int size = imageList.getCheckedItemCount();
-                        ArrayList<File> files = new ArrayList<>(size);
-
-                        for (int i = 0; i < checkedItemPositions.size(); ++i) {
-                            int key = checkedItemPositions.keyAt(i);
-                            if (checkedItemPositions.get(key)) {
-                                File image = (File) imageList.getItemAtPosition(key);
-                                if (image != null) {
-                                    files.add(image);
-                                }
-                            }
-                        }
-
-                        if (!files.isEmpty()) {
-                            deleteFiles(files, mode);
-                        }
-
-                        break;
-
-                    case R.id.menu_action_upload:
-                        //todo upload items here
-                        mode.finish();
-                        break;
-
-                    case R.id.menu_action_select_all:
-                        int count = imageList.getAdapter().getCount();
-                        for (int i = 0; i < count; i++) {
-                            imageList.setItemChecked(i, true);
-                        }
-                        break;
-                }
-
-                return true;
-            }
-
-            @Override
-            public void onDestroyActionMode(ActionMode mode) {
-
-            }
-        });
-
-        File imageFolder = getImageFolder();
-
-        if (imageFolder != null) {
-            imageGridAdapter = new ImageGridAdapter(this, imageFolder);
-            imageList.setAdapter(imageGridAdapter);
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.container, new BucketListFragment())
+                    .commit();
         }
     }
 
@@ -290,14 +178,6 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
-    public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.take_picture_button:
-                captureImage();
-                break;
-        }
-    }
-
     void captureImage() {
         Uri fileUri = getOutputMediaFileUri();
 
@@ -343,60 +223,6 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(MainActivity.this, "Permission Denied", Toast.LENGTH_SHORT).show();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-        if (imageGridAdapter != null) {
-            imageGridAdapter.notifyDataSetChanged();
-
-        }
-    }
-
-    private class FetchBucketTask extends AsyncTask<Void, Void, List<Bucket>> {
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
-
-        @Override
-        protected List<Bucket> doInBackground(Void... params) {
-            KeyPairDAO keyPairDAO = KeyPairDAO.getInstance(MainActivity.this);
-            PublicKey publicKey = keyPairDAO.getPublicKey();
-            PrivateKey privateKey = keyPairDAO.getPrivateKey();
-
-            try {
-                String nonce = String.valueOf(System.currentTimeMillis() / 1000L);
-                String hexEncodedPublicKeyString = ECUtils.getHexEncodedPublicKey(publicKey);
-                String toBeSignedString = "GET\n/buckets\n" + "__nonce=" + nonce;
-
-                byte[] signatureBytes = ECUtils.sign(privateKey, toBeSignedString);
-                String hexEncodedSignature = Hex.toHexString(signatureBytes);
-
-
-                StorjService storjService = StorjServiceProvider.getInstance();
-                Call<List<Bucket>> call = storjService
-                        .fetchBuckets(hexEncodedSignature, hexEncodedPublicKeyString, nonce);
-                Response<List<Bucket>> response = call.execute();
-
-                if (response.isSuccessful()) {
-                    Log.i(TAG, "Fetch Buckets call successful");
-                    Log.i(TAG, "List size: " + response.body().size());
-                } else {
-                    Log.e(TAG, "Fetch Buckets call failed");
-                }
-            } catch (IOException | InvalidKeyException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(List<Bucket> buckets) {
-            super.onPostExecute(buckets);
-        }
-    }
-
     private class CreateBucketTask extends AsyncTask<Void, Void, Bucket> {
         private final String bucketName;
         private final int storage;
@@ -432,9 +258,6 @@ public class MainActivity extends AppCompatActivity {
                 //Construct a string according to instructions provided at
                 // https://github.com/Storj/bridge/blob/master/doc/auth.md#ecdsa-signatures
                 String toBeSignedString =  "POST\n/buckets\n" + bucketModelJson;
-                Log.d(TAG, "ToBeSignedString: " + toBeSignedString);
-//                byte[] digest = Crypto.sha256Digest(toBeSignedString);
-//                byte[] signatureBytes = ECUtils.sign(privateKey, digest);
                 byte[] signatureBytes = Crypto.signString("SHA256withECDSA", "SC", privateKey, toBeSignedString);
 
                 //Hex encode the signature
