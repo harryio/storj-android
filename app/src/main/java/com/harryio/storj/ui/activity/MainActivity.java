@@ -5,11 +5,13 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.ActionMode;
 import android.view.Menu;
@@ -22,14 +24,30 @@ import android.widget.GridView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
 import com.harryio.storj.R;
+import com.harryio.storj.StorjService;
+import com.harryio.storj.StorjServiceProvider;
+import com.harryio.storj.database.KeyPairDAO;
+import com.harryio.storj.model.Bucket;
+import com.harryio.storj.model.BucketModel;
 import com.harryio.storj.ui.adapter.ImageGridAdapter;
+import com.harryio.storj.util.Crypto;
+import com.harryio.storj.util.ECUtils;
 import com.harryio.storj.util.SharedPrefUtils;
 
+import org.spongycastle.util.encoders.Hex;
+
 import java.io.File;
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import butterknife.Bind;
@@ -39,6 +57,8 @@ import permissions.dispatcher.OnPermissionDenied;
 import permissions.dispatcher.OnShowRationale;
 import permissions.dispatcher.PermissionRequest;
 import permissions.dispatcher.RuntimePermissions;
+import retrofit2.Call;
+import retrofit2.Response;
 
 import static android.os.Environment.DIRECTORY_PICTURES;
 import static android.os.Environment.getExternalStoragePublicDirectory;
@@ -62,18 +82,23 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //Check logged in status of the user
+        //If user is not logged in, launch the SignUpActivity and finish this activity
+        //Else continue with this activity
         boolean isLoggedIn = SharedPrefUtils.instance(this)
                 .getBoolean(SharedPrefUtils.KEY_IS_USER_LOGGED_IN, false);
         if (!isLoggedIn) {
             Intent intent = SignUpActivity.getCallingIntent(this);
             startActivity(intent);
             finish();
-        }
-        setContentView(R.layout.activity_main);
-        ButterKnife.bind(this);
+        } else {
+            setContentView(R.layout.activity_main);
+            ButterKnife.bind(this);
 
-        MainActivityPermissionsDispatcher.setUpImageFolderWithCheck(this);
-        setUpGridView();
+            MainActivityPermissionsDispatcher.setUpImageFolderWithCheck(this);
+            setUpGridView();
+            new FetchBucketTask().execute();
+        }
     }
 
     private void setUpGridView() {
@@ -173,6 +198,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /*
+    Show files deletion progress in a dialog
+     */
     private void deleteFiles(final ArrayList<File> toBeDeletedFiles, final ActionMode mode) {
         String message = toBeDeletedFiles.size() == 1 ? "Are you sure you want to " +
                 "delete this item?" : "Are you sure you want to delete selected items?";
@@ -211,6 +239,10 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * Show a short toast message
+     * @param message message to be displayed in toast
+     */
     private void showMessage(String message) {
         Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
     }
@@ -318,6 +350,120 @@ public class MainActivity extends AppCompatActivity {
         if (imageGridAdapter != null) {
             imageGridAdapter.notifyDataSetChanged();
 
+        }
+    }
+
+    private class FetchBucketTask extends AsyncTask<Void, Void, List<Bucket>> {
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected List<Bucket> doInBackground(Void... params) {
+            KeyPairDAO keyPairDAO = KeyPairDAO.getInstance(MainActivity.this);
+            PublicKey publicKey = keyPairDAO.getPublicKey();
+            PrivateKey privateKey = keyPairDAO.getPrivateKey();
+
+            try {
+                String nonce = String.valueOf(System.currentTimeMillis() / 1000L);
+                String hexEncodedPublicKeyString = ECUtils.getHexEncodedPublicKey(publicKey);
+                String toBeSignedString = "GET\n/buckets\n" + "__nonce=" + nonce;
+
+                byte[] signatureBytes = ECUtils.sign(privateKey, toBeSignedString);
+                String hexEncodedSignature = Hex.toHexString(signatureBytes);
+
+
+                StorjService storjService = StorjServiceProvider.getInstance();
+                Call<List<Bucket>> call = storjService
+                        .fetchBuckets(hexEncodedSignature, hexEncodedPublicKeyString, nonce);
+                Response<List<Bucket>> response = call.execute();
+
+                if (response.isSuccessful()) {
+                    Log.i(TAG, "Fetch Buckets call successful");
+                    Log.i(TAG, "List size: " + response.body().size());
+                } else {
+                    Log.e(TAG, "Fetch Buckets call failed");
+                }
+            } catch (IOException | InvalidKeyException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(List<Bucket> buckets) {
+            super.onPostExecute(buckets);
+        }
+    }
+
+    private class CreateBucketTask extends AsyncTask<Void, Void, Bucket> {
+        private final String bucketName;
+        private final int storage;
+        private final int transfer;
+
+        public CreateBucketTask(String bucketName, int storage, int transfer) {
+            this.bucketName = bucketName;
+            this.storage = storage;
+            this.transfer = transfer;
+        }
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Bucket doInBackground(Void... params) {
+            KeyPairDAO keyPairDAO = KeyPairDAO.getInstance(MainActivity.this);
+            //Fetch public and private key from the database
+            PublicKey publicKey = keyPairDAO.getPublicKey();
+            PrivateKey privateKey = keyPairDAO.getPrivateKey();
+
+            try {
+                //Convert public key fetched from the database to hex encoded string
+                // representation of the public key
+                String hexEncodedPublicKeyString = ECUtils.getHexEncodedPublicKey(publicKey);
+                //Create new bucket object to be sent with the api call
+                BucketModel bucketModel = new BucketModel(storage, transfer,
+                        Collections.singletonList(hexEncodedPublicKeyString), bucketName);
+                //Create json representation of the bucket model
+                Gson gson = new Gson();
+                String bucketModelJson = gson.toJson(bucketModel);
+                //Construct a string according to instructions provided at
+                // https://github.com/Storj/bridge/blob/master/doc/auth.md#ecdsa-signatures
+                String toBeSignedString =  "POST\n/buckets\n" + bucketModelJson;
+                Log.d(TAG, "ToBeSignedString: " + toBeSignedString);
+//                byte[] digest = Crypto.sha256Digest(toBeSignedString);
+//                byte[] signatureBytes = ECUtils.sign(privateKey, digest);
+                byte[] signatureBytes = Crypto.signString("SHA256withECDSA", "SC", privateKey, toBeSignedString);
+
+                //Hex encode the signature
+                String hexEncodedSignature = Hex.toHexString(signatureBytes);
+
+                //Make api call to create a new bucket
+                StorjService storjService = StorjServiceProvider.getInstance();
+                Call<Bucket> call = storjService.createNewBucket(hexEncodedSignature,
+                        hexEncodedPublicKeyString, bucketModel);
+                Response<Bucket> response = call.execute();
+
+                if (response.isSuccessful()) {
+                    return response.body();
+                } else {
+                    Log.e(TAG, "Create new bucket call failed");
+                }
+            } catch (IOException | NullPointerException | InvalidKeyException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Bucket bucket) {
+            super.onPostExecute(bucket);
+            if (bucket != null) {
+                Log.i(TAG, "Buckets Size " + bucket.toString());
+            }
         }
     }
 }

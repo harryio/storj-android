@@ -6,7 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import com.harryio.storj.util.SecurityUtils;
+import com.harryio.storj.util.ECUtils;
 
 import java.security.KeyPair;
 import java.security.PrivateKey;
@@ -56,7 +56,7 @@ public class KeyPairDAO {
             database.close();
         }
 
-        return data != null ? SecurityUtils.instance().getPublicKey(data) : null;
+        return data != null ? ECUtils.getPublicKey(data) : null;
     }
 
     public PrivateKey getPrivateKey() {
@@ -78,7 +78,7 @@ public class KeyPairDAO {
             database.close();
         }
 
-        return data != null ? SecurityUtils.instance().getPrivateKey(data) : null;
+        return data != null ? ECUtils.getPrivateKey(data) : null;
     }
 
     private ContentValues map(KeyPair keyPair) {

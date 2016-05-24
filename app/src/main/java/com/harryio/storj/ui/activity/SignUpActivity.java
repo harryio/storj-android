@@ -19,17 +19,18 @@ import com.harryio.storj.StorjServiceProvider;
 import com.harryio.storj.database.KeyPairDAO;
 import com.harryio.storj.model.User;
 import com.harryio.storj.model.UserStatus;
-import com.harryio.storj.util.SHA;
-import com.harryio.storj.util.SecurityUtils;
+import com.harryio.storj.util.Crypto;
+import com.harryio.storj.util.ECUtils;
 import com.harryio.storj.util.SharedPrefUtils;
+
+import org.spongycastle.util.encoders.Hex;
 
 import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.security.PublicKey;
-import java.security.spec.InvalidKeySpecException;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -113,35 +114,43 @@ public class SignUpActivity extends AppCompatActivity {
         @Override
         protected UserStatus doInBackground(Void... params) {
             try {
-                //Hex encode SHA-256 digest of password
-                password = SHA.hash256(password);
-                SecurityUtils securityUtils = SecurityUtils.instance();
-                KeyPair keyPair = securityUtils.getKeyPair();
-                PublicKey publicKey = keyPair.getPublic();
-                User user = new User(email, password, securityUtils.getPublicKeyAsString(publicKey));
+                //SHA-256 digest of password
+                byte[] bytes = Crypto.sha256Digest(password);
+                //Hex of SHA-256 digest of password
+                password = Hex.toHexString(bytes);
+                KeyPair keyPair = ECUtils.getKeyPair();
+                String hexEncodedPublicString = ECUtils.getHexEncodedPublicKey(keyPair.getPublic());
+                //Create new user
+                User user = new User(email, password, hexEncodedPublicString);
 
                 StorjService storjService = StorjServiceProvider.getInstance();
                 Call<UserStatus> signUpResultCall = storjService.registerUser(user);
 
+                //Make an api call to register user
                 Response<UserStatus> response = signUpResultCall.execute();
                 if (response.isSuccessful()) {
+                    //Api call was successful
+                    //Get body of the successful response
                     UserStatus result = response.body();
+                    //Save public and private key to database
                     KeyPairDAO.getInstance(SignUpActivity.this).insert(keyPair);
+                    //Set user as logged in
                     SharedPrefUtils.instance(SignUpActivity.this)
                             .storeBoolean(SharedPrefUtils.KEY_IS_USER_LOGGED_IN, true);
                     Log.d(TAG, "SignUp request successful:\n" + result.toString());
                     return result;
                 } else {
+                    //Api call failed
+                    //Print out the error response body
                     final ResponseBody responseBody = response.errorBody();
                     Log.e(TAG, "SignUp request failed:\n" + responseBody.string());
                 }
             } catch (NoSuchAlgorithmException e) {
                 e.printStackTrace();
                 Log.e(TAG, "No algorithm found for \"SHA-256\"");
-            } catch (InvalidAlgorithmParameterException | NoSuchProviderException | InvalidKeySpecException | IOException e) {
+            } catch (InvalidAlgorithmParameterException | NoSuchProviderException | IOException | NullPointerException | InvalidKeyException e) {
                 e.printStackTrace();
             }
-
             return null;
         }
 
@@ -154,6 +163,7 @@ public class SignUpActivity extends AppCompatActivity {
                 signupView.setVisibility(View.VISIBLE);
                 progressBar.setVisibility(View.GONE);
             } else {
+                //Sign up was successful
                 Intent intent = new Intent(SignUpActivity.this, MainActivity.class);
                 startActivity(intent);
                 finish();
