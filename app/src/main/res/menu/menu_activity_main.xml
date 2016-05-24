@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_capture_image"
+        android:icon="@drawable/ic_camera"
+        android:orderInCategory="100"
+        android:title="@string/capture_image"
+        app:showAsAction="ifRoom"
+        />
+
+    <item
+        android:id="@+id/action_create_bucket"
+        android:icon="@drawable/ic_create_new_folder"
+        android:orderInCategory="200"
+        android:title="@string/create_new_bucket"
+        app:showAsAction="ifRoom"
+        />
+
+</menu>

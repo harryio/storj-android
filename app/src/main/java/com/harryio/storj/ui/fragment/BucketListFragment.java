@@ -40,6 +40,8 @@ public class BucketListFragment extends Fragment {
     @Bind(R.id.loading_view)
     ProgressBar loadingView;
 
+    private BucketGridAdapter adapter;
+
     private OnFragmentInteractionListener mListener;
 
     public BucketListFragment() {
@@ -60,6 +62,12 @@ public class BucketListFragment extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         new FetchBucketTask().execute();
+    }
+
+    public void addNewBucket(Bucket bucket) {
+        if (adapter != null) {
+            adapter.addItem(bucket);
+        }
     }
 
     @Override
@@ -133,7 +141,7 @@ public class BucketListFragment extends Fragment {
             if (buckets != null) {
                 Context context = getContext();
                 if (context != null) {
-                    BucketGridAdapter adapter = new BucketGridAdapter(context, buckets);
+                    adapter = new BucketGridAdapter(context, buckets);
                     gridView.setAdapter(adapter);
                     loadingView.setVisibility(View.GONE);
                     gridView.setVisibility(View.VISIBLE);

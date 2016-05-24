@@ -4,7 +4,7 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.harryio.storj.R;
@@ -15,12 +15,13 @@ import java.util.List;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 
-public class BucketGridAdapter extends ArrayAdapter<Bucket> {
+public class BucketGridAdapter extends BaseAdapter {
     private LayoutInflater inflater;
+    private List<Bucket> buckets;
 
     public BucketGridAdapter(Context context, List<Bucket> buckets) {
-        super(context, 0, buckets);
         inflater = LayoutInflater.from(context);
+        this.buckets = buckets;
     }
 
     @Override
@@ -34,12 +35,32 @@ public class BucketGridAdapter extends ArrayAdapter<Bucket> {
             viewHolder = (ViewHolder) convertView.getTag();
         }
 
-        Bucket bucket = getItem(position);
+        Bucket bucket = (Bucket) getItem(position);
         viewHolder.nameTextView.setText(bucket.getName());
         viewHolder.capacityTextView.setText(String.format("%1$dGB", bucket.getStorage()));
         viewHolder.dateTextView.setText(bucket.getFormattedDate());
 
         return convertView;
+    }
+
+    public void addItem(Bucket bucket) {
+        buckets.add(bucket);
+        notifyDataSetChanged();
+    }
+
+    @Override
+    public int getCount() {
+        return buckets.size();
+    }
+
+    @Override
+    public Object getItem(int position) {
+        return buckets.get(position);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
     }
 
     static class ViewHolder {

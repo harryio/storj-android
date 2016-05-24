@@ -11,8 +11,16 @@ import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.ActionMode;
+import android.view.LayoutInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -40,6 +48,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Locale;
 
+import butterknife.Bind;
 import butterknife.ButterKnife;
 import permissions.dispatcher.NeedsPermission;
 import permissions.dispatcher.OnPermissionDenied;
@@ -54,11 +63,13 @@ import static android.os.Environment.getExternalStoragePublicDirectory;
 
 @RuntimePermissions
 public class MainActivity extends AppCompatActivity implements
-        BucketListFragment.OnFragmentInteractionListener{
+        BucketListFragment.OnFragmentInteractionListener, Toolbar.OnMenuItemClickListener {
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int REQUEST_CODE_CAPTURE_IMAGE = 100;
 
     private static final String IMAGE_DIRECTORY_NAME = "Storj";
+    @Bind(R.id.toolbar)
+    Toolbar toolbar;
 
     private File imageFolder;
     private ProgressDialog deleteProgressDialog;
@@ -83,7 +94,13 @@ public class MainActivity extends AppCompatActivity implements
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.container, new BucketListFragment())
                     .commit();
+            setUpToolbar();
         }
+    }
+
+    private void setUpToolbar() {
+        toolbar.inflateMenu(R.menu.menu_activity_main);
+        toolbar.setOnMenuItemClickListener(this);
     }
 
     /*
@@ -129,6 +146,7 @@ public class MainActivity extends AppCompatActivity implements
 
     /**
      * Show a short toast message
+     *
      * @param message message to be displayed in toast
      */
     private void showMessage(String message) {
@@ -223,19 +241,83 @@ public class MainActivity extends AppCompatActivity implements
         Toast.makeText(MainActivity.this, "Permission Denied", Toast.LENGTH_SHORT).show();
     }
 
+    @Override
+    public boolean onMenuItemClick(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_create_bucket:
+                showCreateBucketDialog();
+                return true;
+
+            case R.id.action_capture_image:
+                captureImage();
+                return true;
+        }
+
+        return true;
+    }
+
+    private void showCreateBucketDialog() {
+        LayoutInflater inflater = LayoutInflater.from(this);
+        View view = inflater.inflate(R.layout.create_new_bucket_dialog, null);
+        final EditText bucketNameEdittext = (EditText) view.findViewById(R.id.bucket_name_editText);
+        final EditText capacityEdittext = (EditText) view.findViewById(R.id.bucket_capacity_editText);
+        final EditText transferEdittext = (EditText) view.findViewById(R.id.bucket_transfer_editText);
+
+        final AlertDialog dialog = new AlertDialog.Builder(this, R.style.CreateBucketDialogTheme)
+                .setTitle("Create new bucket")
+                .setView(view, 80, 20, 80, 0)
+                .setPositiveButton("Create", null)
+                .setNegativeButton(android.R.string.cancel, null)
+                .create();
+
+        dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface d) {
+                Button createBucketButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                createBucketButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        String bucketName = bucketNameEdittext.getText().toString();
+                        String capacity = capacityEdittext.getText().toString();
+                        String transfer = transferEdittext.getText().toString();
+
+                        if (TextUtils.isEmpty(bucketName)) {
+                            showMessage("Bucket name cannot be empty");
+                        } else if (TextUtils.isEmpty(capacity)) {
+                            showMessage("Please enter capacity for the bucket");
+                        } else if (TextUtils.isEmpty(transfer)) {
+                            showMessage("Please enter transfer limit for the bucket");
+                        } else {
+                            dialog.dismiss();
+                            new CreateBucketTask(bucketName, Integer.parseInt(capacity),
+                                    Integer.parseInt(transfer)).execute();
+                        }
+                    }
+                });
+            }
+        });
+
+        dialog.show();
+    }
+
     private class CreateBucketTask extends AsyncTask<Void, Void, Bucket> {
         private final String bucketName;
         private final int storage;
         private final int transfer;
+        private ProgressDialog progressDialog;
 
         public CreateBucketTask(String bucketName, int storage, int transfer) {
             this.bucketName = bucketName;
             this.storage = storage;
             this.transfer = transfer;
         }
+
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
+            progressDialog = ProgressDialog
+                    .show(MainActivity.this, "", "Creating new Bucket", true);
         }
 
         @Override
@@ -257,7 +339,7 @@ public class MainActivity extends AppCompatActivity implements
                 String bucketModelJson = gson.toJson(bucketModel);
                 //Construct a string according to instructions provided at
                 // https://github.com/Storj/bridge/blob/master/doc/auth.md#ecdsa-signatures
-                String toBeSignedString =  "POST\n/buckets\n" + bucketModelJson;
+                String toBeSignedString = "POST\n/buckets\n" + bucketModelJson;
                 byte[] signatureBytes = Crypto.signString("SHA256withECDSA", "SC", privateKey, toBeSignedString);
 
                 //Hex encode the signature
@@ -284,8 +366,18 @@ public class MainActivity extends AppCompatActivity implements
         @Override
         protected void onPostExecute(Bucket bucket) {
             super.onPostExecute(bucket);
+            progressDialog.dismiss();
             if (bucket != null) {
-                Log.i(TAG, "Buckets Size " + bucket.toString());
+                android.support.v4.app.Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.container);
+                if (fragment != null) {
+                    BucketListFragment bucketListFragment = (BucketListFragment) fragment;
+                    bucketListFragment.addNewBucket(bucket);
+                    showMessage("Bucket successfully created");
+                } else {
+                    showMessage("Oops! Seems like something went wrong");
+                }
+            } else {
+                showMessage("Failed to create bucket");
             }
         }
     }
