@@ -252,6 +252,10 @@ public class MainActivity extends AppCompatActivity implements
             case R.id.action_capture_image:
                 captureImage();
                 return true;
+
+            case R.id.action_about:
+                Intent intent = new Intent(this, AboutActivity.class);
+                startActivity(intent);
         }
 
         return true;

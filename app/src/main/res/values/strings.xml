@@ -20,4 +20,7 @@
     <string name="bucket_name">Bucket Name</string>
     <string name="capacity">Capacity(in GB)</string>
     <string name="transfer">Transfer(in GB)</string>
+    <string name="about">About</string>
+    <string name="storj_desc">Distributed, encrypted, and blazing fast object storage, where only you have access to your data.</string>
+    <string name="visit_website">Visit our website</string>
 </resources>
