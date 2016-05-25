@@ -1,4 +1,5 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout android:id="@+id/rootView"
+             xmlns:android="http://schemas.android.com/apk/res/android"
              xmlns:tools="http://schemas.android.com/tools"
              android:layout_width="match_parent"
              android:layout_height="match_parent"
@@ -15,11 +16,29 @@
         android:verticalSpacing="2dp"
         tools:listitem="@layout/bucket_grid_item"/>
 
+    <!--<com.harryio.storj.ui.customview.StateView-->
+        <!--android:id="@+id/emptyView"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent"-->
+        <!--android:orientation="vertical"-->
+        <!--android:visibility="gone"-->
+        <!--app:imageId="@drawable/ic_folder_open"-->
+        <!--app:text="No buckets!"/>-->
+
     <ProgressBar
         android:id="@+id/loading_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:indeterminate="true"/>
+
+    <include
+        android:id="@+id/error_view"
+        layout="@layout/error_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="-48dp"
+        android:visibility="gone"/>
+
 
 </FrameLayout>

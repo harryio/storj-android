@@ -1,9 +1,11 @@
 package com.harryio.storj.ui.fragment;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -11,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.GridView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.harryio.storj.R;
 import com.harryio.storj.StorjService;
@@ -18,6 +21,8 @@ import com.harryio.storj.StorjServiceProvider;
 import com.harryio.storj.database.KeyPairDAO;
 import com.harryio.storj.model.Bucket;
 import com.harryio.storj.ui.adapter.BucketGridAdapter;
+import com.harryio.storj.ui.customview.StateView;
+import com.harryio.storj.util.ConnectionDetector;
 import com.harryio.storj.util.ECUtils;
 
 import org.spongycastle.util.encoders.Hex;
@@ -39,6 +44,11 @@ public class BucketListFragment extends Fragment {
     GridView gridView;
     @Bind(R.id.loading_view)
     ProgressBar loadingView;
+    @Bind(R.id.error_view)
+    StateView errorView;
+    @Bind(R.id.rootView)
+    View rootView;
+
 
     private BucketGridAdapter adapter;
 
@@ -61,7 +71,12 @@ public class BucketListFragment extends Fragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        new FetchBucketTask().execute();
+
+        if (ConnectionDetector.isConnectedToInternet(getContext().getApplicationContext())) {
+            new FetchBucketTask().execute();
+        } else {
+            showErrorView("No internet connection");
+        }
     }
 
     public void addNewBucket(Bucket bucket) {
@@ -93,14 +108,44 @@ public class BucketListFragment extends Fragment {
         mListener = null;
     }
 
+    private void showLoadingView() {
+        gridView.setVisibility(View.GONE);
+        errorView.setVisibility(View.GONE);
+        loadingView.setVisibility(View.VISIBLE);
+    }
+
+    private void showErrorView(String message) {
+        gridView.setVisibility(View.GONE);
+        loadingView.setVisibility(View.GONE);
+        errorView.setVisibility(View.VISIBLE);
+
+        Snackbar snackbar = Snackbar.make(rootView, message, Snackbar.LENGTH_INDEFINITE)
+                .setAction("Retry", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        new FetchBucketTask().execute();
+                    }
+                });
+        snackbar.setActionTextColor(Color.RED);
+        View sbView = snackbar.getView();
+        TextView textView = (TextView) sbView.findViewById(android.support.design.R.id.snackbar_text);
+        textView.setTextColor(Color.YELLOW);
+        snackbar.show();
+    }
+
+    private void showContentView() {
+        errorView.setVisibility(View.GONE);
+        loadingView.setVisibility(View.GONE);
+        gridView.setVisibility(View.VISIBLE);
+    }
+
     public interface OnFragmentInteractionListener {
     }
 
     private class FetchBucketTask extends AsyncTask<Void, Void, List<Bucket>> {
         @Override
         protected void onPreExecute() {
-            gridView.setVisibility(View.GONE);
-            loadingView.setVisibility(View.VISIBLE);
+            showLoadingView();
         }
 
         @Override
@@ -143,10 +188,14 @@ public class BucketListFragment extends Fragment {
                 if (context != null) {
                     adapter = new BucketGridAdapter(context, buckets);
                     gridView.setAdapter(adapter);
-                    loadingView.setVisibility(View.GONE);
-                    gridView.setVisibility(View.VISIBLE);
+                    showContentView();
+                } else {
+                    showErrorView("Network call failed");
                 }
+            } else {
+                showErrorView("Network call failed");
             }
         }
     }
+
 }

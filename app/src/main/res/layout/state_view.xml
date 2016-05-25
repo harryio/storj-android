@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+       xmlns:tools="http://schemas.android.com/tools">
+
+    <ImageView
+        android:id="@+id/state_imageView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        tools:ignore="contentDescription"
+        tools:src="@drawable/ic_photo_camera"/>
+
+    <TextView
+        android:id="@+id/state_textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/text_color_primary"
+        tools:text="Oops! Something went wrong"/>
+
+</merge>

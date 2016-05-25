@@ -31,6 +31,7 @@ import com.harryio.storj.database.KeyPairDAO;
 import com.harryio.storj.model.Bucket;
 import com.harryio.storj.model.BucketModel;
 import com.harryio.storj.ui.fragment.BucketListFragment;
+import com.harryio.storj.util.ConnectionDetector;
 import com.harryio.storj.util.Crypto;
 import com.harryio.storj.util.ECUtils;
 import com.harryio.storj.util.SharedPrefUtils;
@@ -290,8 +291,13 @@ public class MainActivity extends AppCompatActivity implements
                             showMessage("Please enter transfer limit for the bucket");
                         } else {
                             dialog.dismiss();
-                            new CreateBucketTask(bucketName, Integer.parseInt(capacity),
-                                    Integer.parseInt(transfer)).execute();
+                            if (ConnectionDetector.isConnectedToInternet(
+                                    MainActivity.this.getApplicationContext())) {
+                                new CreateBucketTask(bucketName, Integer.parseInt(capacity),
+                                        Integer.parseInt(transfer)).execute();
+                            } else {
+                                showMessage("No internet connection!");
+                            }
                         }
                     }
                 });

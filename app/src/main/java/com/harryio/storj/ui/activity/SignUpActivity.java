@@ -12,6 +12,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.harryio.storj.R;
 import com.harryio.storj.StorjService;
@@ -19,6 +20,7 @@ import com.harryio.storj.StorjServiceProvider;
 import com.harryio.storj.database.KeyPairDAO;
 import com.harryio.storj.model.User;
 import com.harryio.storj.model.UserStatus;
+import com.harryio.storj.util.ConnectionDetector;
 import com.harryio.storj.util.Crypto;
 import com.harryio.storj.util.ECUtils;
 import com.harryio.storj.util.SharedPrefUtils;
@@ -90,7 +92,11 @@ public class SignUpActivity extends AppCompatActivity {
         }
         //Credentials verified, proceed to register user
         if (shouldProceed) {
-            new RegisterUserTask(email, password).execute();
+            if (ConnectionDetector.isConnectedToInternet(getApplicationContext())) {
+                new RegisterUserTask(email, password).execute();
+            } else {
+                Toast.makeText(SignUpActivity.this, "No internet connection!", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
