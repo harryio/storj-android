@@ -1,5 +1,6 @@
 package com.harryio.storj.ui.activity;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -8,10 +9,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Patterns;
-import android.view.View;
+import android.view.WindowManager;
 import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.harryio.storj.R;
@@ -48,10 +47,6 @@ public class SignUpActivity extends AppCompatActivity {
     EditText emailEdittext;
     @Bind(R.id.signup_password_edittext)
     EditText passwordEdittext;
-    @Bind(R.id.signUp_view)
-    LinearLayout signupView;
-    @Bind(R.id.progressBar)
-    ProgressBar progressBar;
 
     public static Intent getCallingIntent(Context context) {
         return new Intent(context, SignUpActivity.class);
@@ -100,21 +95,26 @@ public class SignUpActivity extends AppCompatActivity {
         }
     }
 
+    private void hideKeyboard() {
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
+    }
+
     private class RegisterUserTask extends AsyncTask<Void, Void, UserStatus> {
-        String email, password;
+        private String email, password;
+        private ProgressDialog progressDialog;
 
         RegisterUserTask(String email, String password) {
             this.email = email;
             this.password = password;
+            progressDialog = ProgressDialog.show(SignUpActivity.this, "", "Signing Up", true);
         }
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            //Hide the signup form
-            signupView.setVisibility(View.GONE);
+            hideKeyboard();
             //Show progress bar
-            progressBar.setVisibility(View.VISIBLE);
+            progressDialog.show();
         }
 
         @Override
@@ -164,15 +164,14 @@ public class SignUpActivity extends AppCompatActivity {
         protected void onPostExecute(UserStatus userStatus) {
             super.onPostExecute(userStatus);
 
-            if (userStatus == null) {
-                //Show signup form again as call failed
-                signupView.setVisibility(View.VISIBLE);
-                progressBar.setVisibility(View.GONE);
-            } else {
+            progressDialog.dismiss();
+            if (userStatus != null) {
                 //Sign up was successful
                 Intent intent = new Intent(SignUpActivity.this, MainActivity.class);
                 startActivity(intent);
                 finish();
+            } else {
+                Toast.makeText(SignUpActivity.this, "Sign Up Failed", Toast.LENGTH_SHORT).show();
             }
         }
     }
