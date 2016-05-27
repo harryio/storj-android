@@ -2,13 +2,18 @@ package com.harryio.storj.ui.activity;
 
 import android.Manifest;
 import android.app.ProgressDialog;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -31,6 +36,7 @@ import com.harryio.storj.database.KeyPairDAO;
 import com.harryio.storj.model.Bucket;
 import com.harryio.storj.model.BucketModel;
 import com.harryio.storj.ui.fragment.BucketListFragment;
+import com.harryio.storj.ui.service.UploadService;
 import com.harryio.storj.util.ConnectionDetector;
 import com.harryio.storj.util.Crypto;
 import com.harryio.storj.util.ECUtils;
@@ -74,6 +80,23 @@ public class MainActivity extends AppCompatActivity implements
 
     private File imageFolder;
     private ProgressDialog deleteProgressDialog;
+    private boolean bound = false;
+    private Uri fileUri;
+    private UploadService.UploadBinder service;
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            MainActivity.this.service = (UploadService.UploadBinder) service;
+            bound = true;
+            MainActivity.this.service.fetchFrame();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            service = null;
+            bound = false;
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -166,7 +189,14 @@ public class MainActivity extends AppCompatActivity implements
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
                 case REQUEST_CODE_CAPTURE_IMAGE:
-                    //todo upload camera image here
+                    Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.container);
+                    if (fragment != null) {
+                        BucketListFragment bucketListFragment = (BucketListFragment) fragment;
+                        String bucketId = bucketListFragment.getBucketId();
+                        if (!UploadService.isRunning()) {
+                            service.startUploadService();
+                        }
+                    }
                     break;
             }
         }
@@ -198,7 +228,7 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     void captureImage() {
-        Uri fileUri = getOutputMediaFileUri();
+        fileUri = getOutputMediaFileUri();
 
         if (fileUri != null) {
             Intent captureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -305,6 +335,22 @@ public class MainActivity extends AppCompatActivity implements
         });
 
         dialog.show();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        bindService(new Intent(this, UploadService.class), serviceConnection,
+                Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onStop() {
+        if (bound) {
+            unbindService(serviceConnection);
+            bound = false;
+        }
+        super.onStop();
     }
 
     private class CreateBucketTask extends AsyncTask<Void, Void, Bucket> {

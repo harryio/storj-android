@@ -93,4 +93,12 @@ public class ECUtils {
     public static byte[] sign(PrivateKey privateKey, String string) {
         return Crypto.signString("SHA256withECDSA", "SC", privateKey, string);
     }
+
+    /**
+     * Retruns the hex encoded string of the signature
+     */
+    public static String getHexEncodedSignature(PrivateKey privateKey, String string) {
+        byte[] signature = sign(privateKey, string);
+        return Hex.toHexString(signature);
+    }
 }

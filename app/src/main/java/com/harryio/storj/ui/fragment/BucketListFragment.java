@@ -73,7 +73,7 @@ public class BucketListFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
 
         if (ConnectionDetector.isConnectedToInternet(getContext().getApplicationContext())) {
-            new FetchBucketTask().execute();
+//            new FetchBucketTask().execute();
         } else {
             showErrorView("No internet connection");
         }
@@ -83,6 +83,10 @@ public class BucketListFragment extends Fragment {
         if (adapter != null) {
             adapter.addItem(bucket);
         }
+    }
+
+    public String getBucketId() {
+        return ((Bucket) gridView.getAdapter().getItem(0)).getId();
     }
 
     @Override

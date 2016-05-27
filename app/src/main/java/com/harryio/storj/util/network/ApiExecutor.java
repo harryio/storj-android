@@ -8,6 +8,8 @@ import com.harryio.storj.StorjService;
 import com.harryio.storj.StorjServiceProvider;
 import com.harryio.storj.model.Bucket;
 import com.harryio.storj.model.BucketModel;
+import com.harryio.storj.model.Frame;
+import com.harryio.storj.model.FrameModel;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
@@ -82,6 +84,30 @@ public class ApiExecutor {
         } catch (IOException | InvalidKeyException e) {
             e.printStackTrace();
             Log.e(TAG, "fetchBuckets: call failed", e);
+        }
+
+        return null;
+    }
+
+    public Frame createFrame(FrameModel frameModel) {
+        try {
+            String frameModelJson = gson.toJson(frameModel);
+            String signature = headerGenerator.getHexEncodedSignature(METHOD_POST,
+                    "/frames", frameModelJson);
+            String publickey = headerGenerator.getHexEncodedPublicKey();
+
+            Call<Frame> call = storjService.createNewFrame(signature, publickey, frameModel);
+            Response<Frame> response = call.execute();
+
+            if (response.isSuccessful()) {
+                Log.i(TAG, "createFrame: call successful");
+                return response.body();
+            } else {
+                Log.e(TAG, "createFrame: call failed");
+            }
+        } catch (InvalidKeyException | IOException | NullPointerException e) {
+            e.printStackTrace();
+            Log.e(TAG, "createFrame: call failed", e);
         }
 
         return null;

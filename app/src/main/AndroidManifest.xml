@@ -13,7 +13,6 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-
         <activity
             android:name=".ui.activity.MainActivity"
             android:screenOrientation="portrait"
@@ -23,17 +22,20 @@
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-
         </activity>
         <activity
             android:name=".ui.activity.SignUpActivity"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize">
         </activity>
-
         <activity
             android:name=".ui.activity.ImageDetailActivity"
             android:screenOrientation="portrait"/>
+
+        <service
+            android:name=".ui.service.UploadService"
+            android:exported="false">
+        </service>
     </application>
 
 </manifest>
