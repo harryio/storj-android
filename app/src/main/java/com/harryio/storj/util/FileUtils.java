@@ -6,6 +6,7 @@ import android.webkit.MimeTypeMap;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Arrays;
 
 public class FileUtils {
     private FileUtils() {}
@@ -53,7 +54,7 @@ public class FileUtils {
         return path.substring(path.lastIndexOf(File.separator) + 1);
     }
 
-    private byte[] fileToByteArray(File file) {
+    public static byte[] fileToByteArray(File file) {
         byte[] b = new byte[(int) file.length()];
         try {
             FileInputStream fileInputStream = new FileInputStream(file);
@@ -63,5 +64,14 @@ public class FileUtils {
         }
 
         return b;
+    }
+
+    public static byte[] getPaddedByteArray(File file) {
+        byte[] array = fileToByteArray(file);
+
+        int length = array.length;
+        int capacity = (int) Math.pow(2, Math.ceil(Math.log(length) / Math.log(2)));
+
+        return Arrays.copyOf(array, capacity);
     }
 }

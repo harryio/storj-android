@@ -10,26 +10,25 @@ import java.security.SignatureException;
 
 public class Crypto {
     /**
-     * Sign a string with the provided algorithm
+     * Sign a byte array with the provided algorithm
      * @param algo algorithm to be used when signing a string
      * @param provider provider for the signing algorithm
-     * @param privateKey private key to be used for signing the string
-     * @param str string to be signed
+     * @param privateKey private to be user for signing the string
+     * @param data byte array to be signed
      * @return signature byte array
      */
-    public static byte[] signString(String algo, String provider, PrivateKey privateKey, String str) {
+    public static byte[] signString(String algo, String provider, PrivateKey privateKey, byte[] data) {
         try {
             Signature signature = Signature.getInstance(algo, provider);
             signature.initSign(privateKey);
-            byte[] strBytes = str.getBytes();
-            signature.update(strBytes);
+            signature.update(data);
             return signature.sign();
         } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException | NoSuchProviderException e) {
             e.printStackTrace();
         }
+
         return null;
     }
-
 
     /**
      * Produce SHA-256 digest of the string

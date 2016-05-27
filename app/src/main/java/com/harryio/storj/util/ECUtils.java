@@ -24,6 +24,8 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
 public class ECUtils {
+    private static final String SIGNATURE_ALGORITHM = "SHA256withECDSA";
+    private static final String SIGNATURE_ALGORITHM_PROVIDER = "SC";
     private static final ECDomainParameters ecParams;
 
     static {
@@ -87,11 +89,19 @@ public class ECUtils {
     }
 
     /**
-     * Sign string using ECDSA algo
-     * @return signature
+     * Sign string using ECDSA
+     * @return signature bytes
      */
     public static byte[] sign(PrivateKey privateKey, String string) {
-        return Crypto.signString("SHA256withECDSA", "SC", privateKey, string);
+        return sign(privateKey, string.getBytes());
+    }
+
+    /**
+     * Sign byte array using ECDSA
+     * @return signature bytes
+     */
+    public static byte[] sign(PrivateKey privateKey, byte[] data) {
+        return Crypto.signString(SIGNATURE_ALGORITHM, SIGNATURE_ALGORITHM_PROVIDER, privateKey, data);
     }
 
     /**
