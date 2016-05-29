@@ -9,6 +9,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -57,6 +58,8 @@ import permissions.dispatcher.PermissionRequest;
 import permissions.dispatcher.RuntimePermissions;
 import retrofit2.Call;
 import retrofit2.Response;
+import uk.co.deanwild.materialshowcaseview.MaterialShowcaseSequence;
+import uk.co.deanwild.materialshowcaseview.ShowcaseConfig;
 
 import static android.os.Environment.DIRECTORY_PICTURES;
 import static android.os.Environment.getExternalStoragePublicDirectory;
@@ -85,11 +88,30 @@ public class MainActivity extends AppCompatActivity implements
                 .replace(R.id.container, new BucketListFragment())
                 .commit();
         setUpToolbar();
+        showTutorial();
     }
 
     private void setUpToolbar() {
         toolbar.inflateMenu(R.menu.menu_activity_main);
         toolbar.setOnMenuItemClickListener(this);
+    }
+
+    private void showTutorial() {
+        ShowcaseConfig config = new ShowcaseConfig();
+        config.setDelay(200);
+        config.setMaskColor(ContextCompat.getColor(this, R.color.colorPrimaryDark_75));
+        config.setRenderOverNavigationBar(false);
+        config.setContentTextColor(ContextCompat.getColor(this, R.color.white));
+        config.setDismissTextColor(ContextCompat.getColor(this, R.color.colorAccent));
+
+        MaterialShowcaseSequence sequence = new MaterialShowcaseSequence(this);
+        sequence.setConfig(config);
+        sequence.addSequenceItem(toolbar.findViewById(R.id.action_capture_image),
+                "Click this button to capture image and automatically " +
+                        "upload captured image directly to cloud.", "OK");
+        sequence.addSequenceItem(toolbar.findViewById(R.id.action_create_bucket),
+                "Click here to create new bucket on the cloud", "GOT IT");
+        sequence.start();
     }
 
     /*

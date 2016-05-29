@@ -22,6 +22,13 @@ android {
     }
 }
 
+allprojects {
+    repositories {
+        jcenter()
+        maven { url "https://jitpack.io" }
+    }
+}
+
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
@@ -40,4 +47,5 @@ dependencies {
     compile 'com.madgag.spongycastle:prov:1.52.0.0'
     compile 'com.squareup.okhttp3:logging-interceptor:3.2.0'
     compile 'com.github.medyo:android-about-page:1.0.8'
+    compile 'com.github.deano2390:MaterialShowcaseView:1.1.0'
 }
