@@ -1,7 +1,6 @@
 package com.harryio.storj.ui.activity;
 
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -47,10 +46,6 @@ public class SignUpActivity extends AppCompatActivity {
     EditText emailEdittext;
     @Bind(R.id.signup_password_edittext)
     EditText passwordEdittext;
-
-    public static Intent getCallingIntent(Context context) {
-        return new Intent(context, SignUpActivity.class);
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

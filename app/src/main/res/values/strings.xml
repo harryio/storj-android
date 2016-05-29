@@ -14,7 +14,7 @@
     <string name="select_all">Select All</string>
     <string name="empty_image_grid_hint">Tap the camera button below to take photos</string>
     <string name="no_photos">No photos</string>
-    <string name="signup">SignUp</string>
+    <string name="signup">Sign Up</string>
     <string name="create_new_bucket">Create New Bucket</string>
     <string name="capture_image">Capture Image</string>
     <string name="bucket_name">Bucket Name</string>
