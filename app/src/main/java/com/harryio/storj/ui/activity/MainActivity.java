@@ -34,7 +34,7 @@ import android.widget.Toast;
 
 import com.harryio.storj.R;
 import com.harryio.storj.model.Bucket;
-import com.harryio.storj.ui.adapter.BucketGridAdapter;
+import com.harryio.storj.ui.adapter.BucketAdapter;
 import com.harryio.storj.ui.service.UploadService;
 import com.harryio.storj.util.ConnectionDetector;
 import com.harryio.storj.util.SharedPrefUtils;
@@ -82,10 +82,11 @@ public class MainActivity extends AppCompatActivity implements
     View rootView;
 
     private ApiExecutor apiExecutor;
+    private SharedPrefUtils prefUtils;
     private File imageFolder;
     private ProgressDialog deleteProgressDialog;
     private boolean bound = false;
-    private BucketGridAdapter bucketGridAdapter;
+    private BucketAdapter bucketAdapter;
     private Uri fileUri;
     private UploadService.UploadBinder service;
     private ServiceConnection serviceConnection = new ServiceConnection() {
@@ -112,7 +113,8 @@ public class MainActivity extends AppCompatActivity implements
         MainActivityPermissionsDispatcher.setUpImageFolderWithCheck(this);
         setUpToolbar();
 
-        boolean isTutorialShown = SharedPrefUtils.instance(this)
+        prefUtils = SharedPrefUtils.instance(this);
+        boolean isTutorialShown = prefUtils
                 .getBoolean(SharedPrefUtils.KEY_IS_TUTORIAL_SHOWN, false);
         if (!isTutorialShown) {
             showTutorial();
@@ -135,8 +137,24 @@ public class MainActivity extends AppCompatActivity implements
         });
         gridView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                return false;
+            public boolean onItemLongClick(final AdapterView<?> parent, View view, final int position, long id) {
+                new AlertDialog.Builder(MainActivity.this, R.style.StorjDialog)
+                        .setTitle("Select default bucket")
+                        .setMessage("Set this bucket as default for uploading files to cloud?")
+                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                Bucket bucket = (Bucket) parent.getItemAtPosition(position);
+                                String bucketId = bucket.getId();
+                                prefUtils.storeString(SharedPrefUtils.KEY_DEFAULT_BUCKET_ID, bucketId);
+                                bucketAdapter.setDefaultBucketId(bucketId);
+                                bucketAdapter.notifyDataSetChanged();
+                            }
+                        })
+                        .setNegativeButton(android.R.string.no, null)
+                        .show();
+
+                return true;
             }
         });
     }
@@ -158,7 +176,7 @@ public class MainActivity extends AppCompatActivity implements
         sequence.setConfig(config);
         sequence.addSequenceItem(toolbar.findViewById(R.id.action_capture_image),
                 "Click this button to capture image and automatically " +
-                        "upload captured image directly to cloud.", "OK");
+                        "upload captured image directly to cloud.", "NEXT");
         sequence.addSequenceItem(toolbar.findViewById(R.id.action_create_bucket),
                 "Click here to create new bucket on the cloud", "GOT IT")
                 .setOnItemDismissedListener(new MaterialShowcaseSequence.OnSequenceItemDismissedListener() {
@@ -470,7 +488,13 @@ public class MainActivity extends AppCompatActivity implements
             super.onPostExecute(bucket);
             progressDialog.dismiss();
             if (bucket != null) {
-                bucketGridAdapter.addItem(bucket);
+                String defaultBucketId = prefUtils.getString(SharedPrefUtils.KEY_DEFAULT_BUCKET_ID, null);
+                if (TextUtils.isEmpty(defaultBucketId)) {
+                    String bucketId = bucket.getId();
+                    prefUtils.storeString(SharedPrefUtils.KEY_DEFAULT_BUCKET_ID, bucketId);
+                    bucketAdapter.setDefaultBucketId(bucketId);
+                }
+                bucketAdapter.addItem(bucket);
             } else {
                 showMessage("Failed to create bucket");
             }
@@ -491,8 +515,17 @@ public class MainActivity extends AppCompatActivity implements
         @Override
         protected void onPostExecute(List<Bucket> buckets) {
             if (buckets != null) {
-                bucketGridAdapter = new BucketGridAdapter(MainActivity.this, buckets);
-                gridView.setAdapter(bucketGridAdapter);
+                bucketAdapter = new BucketAdapter(MainActivity.this, buckets);
+                String defaultBucketId = prefUtils.getString(SharedPrefUtils.KEY_DEFAULT_BUCKET_ID, null);
+                if (TextUtils.isEmpty(defaultBucketId)) {
+                    if (buckets.size() > 0) {
+                        Bucket bucket = buckets.get(0);
+                        defaultBucketId = bucket.getId();
+                        prefUtils.storeString(SharedPrefUtils.KEY_DEFAULT_BUCKET_ID, defaultBucketId);
+                    }
+                }
+                bucketAdapter.setDefaultBucketId(defaultBucketId);
+                gridView.setAdapter(bucketAdapter);
                 showContentView();
             } else {
                 showErrorView("Network call failed");

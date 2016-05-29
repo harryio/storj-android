@@ -13,13 +13,29 @@
         android:orientation="vertical"
         android:padding="4dp">
 
-        <ImageView
-            android:layout_width="wrap_content"
+        <FrameLayout
+            android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_weight="1"
-            app:srcCompat="@drawable/ic_folder"
-            tools:ignore="contentDescription"/>
+            android:layout_weight="1">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_horizontal"
+                app:srcCompat="@drawable/ic_folder"
+                tools:ignore="contentDescription"/>
+
+            <ImageView
+                android:id="@+id/imageView_cloud"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:visibility="gone"
+                app:srcCompat="@drawable/ic_cloud"
+                tools:ignore="contentDescription"/>
+
+        </FrameLayout>
+
 
         <TextView
             android:id="@+id/name_textView"

@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.harryio.storj.R;
@@ -15,11 +16,12 @@ import java.util.List;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 
-public class BucketGridAdapter extends BaseAdapter {
+public class BucketAdapter extends BaseAdapter {
     private LayoutInflater inflater;
     private List<Bucket> buckets;
+    private String defaultBucketId;
 
-    public BucketGridAdapter(Context context, List<Bucket> buckets) {
+    public BucketAdapter(Context context, List<Bucket> buckets) {
         inflater = LayoutInflater.from(context);
         this.buckets = buckets;
     }
@@ -39,6 +41,7 @@ public class BucketGridAdapter extends BaseAdapter {
         viewHolder.nameTextView.setText(bucket.getName());
         viewHolder.capacityTextView.setText(String.format("%1$dGB", bucket.getStorage()));
         viewHolder.dateTextView.setText(bucket.getFormattedDate());
+        viewHolder.cloudImageView.setVisibility(defaultBucketId.equals(bucket.getId()) ? View.VISIBLE : View.GONE);
 
         return convertView;
     }
@@ -46,6 +49,10 @@ public class BucketGridAdapter extends BaseAdapter {
     public void addItem(Bucket bucket) {
         buckets.add(bucket);
         notifyDataSetChanged();
+    }
+
+    public void setDefaultBucketId(String bucketId) {
+        defaultBucketId = bucketId;
     }
 
     @Override
@@ -70,6 +77,8 @@ public class BucketGridAdapter extends BaseAdapter {
         TextView capacityTextView;
         @Bind(R.id.date_textView)
         TextView dateTextView;
+        @Bind(R.id.imageView_cloud)
+        ImageView cloudImageView;
 
         ViewHolder(View view) {
             ButterKnife.bind(this, view);
