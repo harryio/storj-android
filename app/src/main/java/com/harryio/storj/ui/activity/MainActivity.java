@@ -314,7 +314,7 @@ public class MainActivity extends AppCompatActivity implements
         final EditText capacityEdittext = (EditText) view.findViewById(R.id.bucket_capacity_editText);
         final EditText transferEdittext = (EditText) view.findViewById(R.id.bucket_transfer_editText);
 
-        final AlertDialog dialog = new AlertDialog.Builder(this, R.style.CreateBucketDialogTheme)
+        final AlertDialog dialog = new AlertDialog.Builder(this, R.style.StorjDialog)
                 .setTitle("Create new bucket")
                 .setView(view, 80, 20, 80, 0)
                 .setPositiveButton("Create", null)
