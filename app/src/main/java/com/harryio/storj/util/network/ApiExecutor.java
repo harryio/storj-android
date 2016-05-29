@@ -6,6 +6,7 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.harryio.storj.StorjService;
 import com.harryio.storj.StorjServiceProvider;
+import com.harryio.storj.database.KeyPairDAO;
 import com.harryio.storj.model.Bucket;
 import com.harryio.storj.model.BucketModel;
 import com.harryio.storj.model.Frame;
@@ -13,12 +14,23 @@ import com.harryio.storj.model.FrameModel;
 import com.harryio.storj.model.Shard;
 import com.harryio.storj.model.ShardModel;
 import com.harryio.storj.model.StorjFile;
+import com.harryio.storj.model.User;
+import com.harryio.storj.model.UserStatus;
+import com.harryio.storj.util.Crypto;
+import com.harryio.storj.util.ECUtils;
+
+import org.spongycastle.util.encoders.Hex;
 
 import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.util.Collections;
 import java.util.List;
 
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Response;
 
@@ -27,14 +39,15 @@ public class ApiExecutor {
     private static final String METHOD_POST = "POST";
     private static final String METHOD_GET = "GET";
     private static final String METHOD_PUT = "PUT";
-
     private static ApiExecutor apiExecutor;
+    private KeyPairDAO keyPairDAO;
     private HeaderGenerator headerGenerator;
     private StorjService storjService;
     private Gson gson;
 
     private ApiExecutor(Context context) {
-        headerGenerator = HeaderGenerator.getInstance(context);
+        keyPairDAO = KeyPairDAO.getInstance(context);
+        headerGenerator = HeaderGenerator.getInstance(keyPairDAO);
         storjService = StorjServiceProvider.getInstance();
         gson = new Gson();
     }
@@ -87,7 +100,7 @@ public class ApiExecutor {
             } else {
                 Log.e(TAG, "fetchBuckets: call failed");
             }
-        } catch (IOException | InvalidKeyException e) {
+        } catch (IOException | InvalidKeyException | NullPointerException e) {
             e.printStackTrace();
             Log.e(TAG, "fetchBuckets: call failed", e);
         }
@@ -135,7 +148,7 @@ public class ApiExecutor {
             } else {
                 Log.e(TAG, "createShard: call failed");
             }
-        } catch (InvalidKeyException | IOException e) {
+        } catch (InvalidKeyException | IOException | NullPointerException e) {
             e.printStackTrace();
             Log.e(TAG, "createShard: call failed", e);
         }
@@ -159,11 +172,47 @@ public class ApiExecutor {
             } else {
                 Log.e(TAG, "fetchFiles: call failed");
             }
-        } catch (InvalidKeyException | IOException e) {
+        } catch (InvalidKeyException | IOException | NullPointerException e) {
             e.printStackTrace();
             Log.e(TAG, "fetchFiles: call failed", e);
         }
 
+        return null;
+    }
+
+    public UserStatus registerUser(String email, String password) {
+        try {
+            //SHA-256 digest of password
+            byte[] bytes = Crypto.sha256Digest(password);
+            //Hex of SHA-256 digest of password
+            password = Hex.toHexString(bytes);
+            KeyPair keyPair = ECUtils.getKeyPair();
+            String hexEncodedPublicString = ECUtils.getHexEncodedPublicKey(keyPair.getPublic());
+            //Create new user
+            User user = new User(email, password, hexEncodedPublicString);
+
+            StorjService storjService = StorjServiceProvider.getInstance();
+            Call<UserStatus> signUpResultCall = storjService.registerUser(user);
+
+            //Make an api call to register user
+            Response<UserStatus> response = signUpResultCall.execute();
+            if (response.isSuccessful()) {
+                //Api call was successful
+                //Save public and private key to database
+                keyPairDAO.insert(keyPair);
+                return response.body();
+            } else {
+                //Api call failed
+                //Print out the error response body
+                final ResponseBody responseBody = response.errorBody();
+                Log.e(TAG, "SignUp request failed:\n" + responseBody.string());
+            }
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            Log.e(TAG, "No algorithm found for \"SHA-256\"");
+        } catch (InvalidAlgorithmParameterException | NoSuchProviderException | IOException | NullPointerException | InvalidKeyException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 }

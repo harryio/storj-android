@@ -78,7 +78,7 @@
                 android:layout_marginRight="8dp"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="16dp"
-                android:background="@color/colorPrimary"
+                android:background="@color/colorAccent"
                 android:text="@string/signup"
                 android:textColor="@color/white"
                 />

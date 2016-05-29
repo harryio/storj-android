@@ -1,7 +1,5 @@
 package com.harryio.storj.util.network;
 
-import android.content.Context;
-
 import com.harryio.storj.database.KeyPairDAO;
 import com.harryio.storj.util.ECUtils;
 
@@ -13,13 +11,13 @@ public class HeaderGenerator {
     private KeyPairDAO keyPairDAO;
     private String hexEncodedPublicKey;
 
-    private HeaderGenerator(Context context) {
-        keyPairDAO = KeyPairDAO.getInstance(context);
+    private HeaderGenerator(KeyPairDAO keyPairDAO) {
+        this.keyPairDAO = keyPairDAO;
     }
 
-    public static HeaderGenerator getInstance(Context context) {
+    public static HeaderGenerator getInstance(KeyPairDAO keyPairDAO) {
         if (headerGenerator == null) {
-            headerGenerator = new HeaderGenerator(context);
+            headerGenerator = new HeaderGenerator(keyPairDAO);
         }
         return headerGenerator;
     }
