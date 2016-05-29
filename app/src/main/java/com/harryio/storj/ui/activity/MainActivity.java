@@ -35,6 +35,7 @@ import com.harryio.storj.ui.fragment.BucketListFragment;
 import com.harryio.storj.util.ConnectionDetector;
 import com.harryio.storj.util.Crypto;
 import com.harryio.storj.util.ECUtils;
+import com.harryio.storj.util.SharedPrefUtils;
 
 import org.spongycastle.util.encoders.Hex;
 
@@ -59,6 +60,7 @@ import permissions.dispatcher.RuntimePermissions;
 import retrofit2.Call;
 import retrofit2.Response;
 import uk.co.deanwild.materialshowcaseview.MaterialShowcaseSequence;
+import uk.co.deanwild.materialshowcaseview.MaterialShowcaseView;
 import uk.co.deanwild.materialshowcaseview.ShowcaseConfig;
 
 import static android.os.Environment.DIRECTORY_PICTURES;
@@ -88,7 +90,12 @@ public class MainActivity extends AppCompatActivity implements
                 .replace(R.id.container, new BucketListFragment())
                 .commit();
         setUpToolbar();
-        showTutorial();
+
+        boolean isTutorialShown = SharedPrefUtils.instance(this)
+                .getBoolean(SharedPrefUtils.KEY_IS_TUTORIAL_SHOWN, false);
+        if (!isTutorialShown) {
+            showTutorial();
+        }
     }
 
     private void setUpToolbar() {
@@ -110,7 +117,14 @@ public class MainActivity extends AppCompatActivity implements
                 "Click this button to capture image and automatically " +
                         "upload captured image directly to cloud.", "OK");
         sequence.addSequenceItem(toolbar.findViewById(R.id.action_create_bucket),
-                "Click here to create new bucket on the cloud", "GOT IT");
+                "Click here to create new bucket on the cloud", "GOT IT")
+                .setOnItemDismissedListener(new MaterialShowcaseSequence.OnSequenceItemDismissedListener() {
+                    @Override
+                    public void onDismiss(MaterialShowcaseView materialShowcaseView, int i) {
+                        SharedPrefUtils.instance(MainActivity.this)
+                                .storeBoolean(SharedPrefUtils.KEY_IS_TUTORIAL_SHOWN, true);
+                    }
+                });
         sequence.start();
     }
 

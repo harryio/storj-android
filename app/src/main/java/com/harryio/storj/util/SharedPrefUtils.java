@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 
 public class SharedPrefUtils {
     public static final String KEY_IS_USER_LOGGED_IN = "com.harryio.IS_USER_LOGGED_IN";
+    public static final String KEY_IS_TUTORIAL_SHOWN = "com.harryio.IS_TUTORIAL_SHOWN";
+
     private static final String PREF_NAME = "StorjPrefs";
     private static SharedPrefUtils sharedPrefUtils;
     private SharedPreferences sharedPreferences;
