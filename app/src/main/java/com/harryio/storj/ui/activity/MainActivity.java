@@ -34,7 +34,6 @@ import com.harryio.storj.ui.fragment.BucketListFragment;
 import com.harryio.storj.util.ConnectionDetector;
 import com.harryio.storj.util.Crypto;
 import com.harryio.storj.util.ECUtils;
-import com.harryio.storj.util.SharedPrefUtils;
 
 import org.spongycastle.util.encoders.Hex;
 
@@ -67,8 +66,8 @@ public class MainActivity extends AppCompatActivity implements
         BucketListFragment.OnFragmentInteractionListener, Toolbar.OnMenuItemClickListener {
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int REQUEST_CODE_CAPTURE_IMAGE = 100;
-
     private static final String IMAGE_DIRECTORY_NAME = "Storj";
+
     @Bind(R.id.toolbar)
     Toolbar toolbar;
 
@@ -78,25 +77,14 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //Check logged in status of the user
-        //If user is not logged in, launch the SignUpActivity and finish this activity
-        //Else continue with this activity
-        boolean isLoggedIn = SharedPrefUtils.instance(this)
-                .getBoolean(SharedPrefUtils.KEY_IS_USER_LOGGED_IN, false);
-        if (!isLoggedIn) {
-            Intent intent = SignUpActivity.getCallingIntent(this);
-            startActivity(intent);
-            finish();
-        } else {
-            setContentView(R.layout.activity_main);
-            ButterKnife.bind(this);
+        setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
 
-            MainActivityPermissionsDispatcher.setUpImageFolderWithCheck(this);
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.container, new BucketListFragment())
-                    .commit();
-            setUpToolbar();
-        }
+        MainActivityPermissionsDispatcher.setUpImageFolderWithCheck(this);
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.container, new BucketListFragment())
+                .commit();
+        setUpToolbar();
     }
 
     private void setUpToolbar() {
