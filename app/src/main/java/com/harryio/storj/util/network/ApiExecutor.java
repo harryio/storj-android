@@ -10,9 +10,12 @@ import com.harryio.storj.model.Bucket;
 import com.harryio.storj.model.BucketModel;
 import com.harryio.storj.model.Frame;
 import com.harryio.storj.model.FrameModel;
+import com.harryio.storj.model.Shard;
+import com.harryio.storj.model.ShardModel;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
+import java.util.Collections;
 import java.util.List;
 
 import retrofit2.Call;
@@ -42,8 +45,10 @@ public class ApiExecutor {
         return apiExecutor;
     }
 
-    public Bucket createBucket(BucketModel bucketModel) {
+    public Bucket createBucket(int storage, int transfer, String bucketName) {
         try {
+            BucketModel bucketModel = new BucketModel(storage, transfer,
+                    Collections.singletonList(headerGenerator.getHexEncodedPublicKey()), bucketName);
             String bucketModelJson = gson.toJson(bucketModel);
             String signature = headerGenerator.getHexEncodedSignature(METHOD_POST, "/buckets", bucketModelJson);
             String publicKey = headerGenerator.getHexEncodedPublicKey();
@@ -108,6 +113,30 @@ public class ApiExecutor {
         } catch (InvalidKeyException | IOException | NullPointerException e) {
             e.printStackTrace();
             Log.e(TAG, "createFrame: call failed", e);
+        }
+
+        return null;
+    }
+
+    public Shard createShard(ShardModel shardModel, String frameId) {
+        try {
+            String shardModelJson = gson.toJson(shardModel);
+            String signature = headerGenerator.getHexEncodedSignature(METHOD_PUT,
+                    "/frames/" + frameId, shardModelJson);
+            String publickey = headerGenerator.getHexEncodedPublicKey();
+
+            Call<Shard> call = storjService.createNewShard(signature, publickey, frameId, shardModel);
+            Response<Shard> response = call.execute();
+
+            if (response.isSuccessful()) {
+                Log.i(TAG, "createShard: call successful");
+                return response.body();
+            } else {
+                Log.e(TAG, "createShard: call failed");
+            }
+        } catch (InvalidKeyException | IOException e) {
+            e.printStackTrace();
+            Log.e(TAG, "createShard: call failed", e);
         }
 
         return null;

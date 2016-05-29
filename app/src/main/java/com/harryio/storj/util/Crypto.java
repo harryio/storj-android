@@ -8,6 +8,13 @@ import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.SignatureException;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+
 public class Crypto {
     /**
      * Sign a byte array with the provided algorithm
@@ -35,11 +42,35 @@ public class Crypto {
      * @return digest of the string
      */
     public static byte[] sha256Digest(String str) {
+        return sha256Digest(str.getBytes());
+    }
+
+    /**
+     * Computes SHA-256 digest
+     * @return SHA-256 digest
+     */
+    public static byte[] sha256Digest(byte[] data) {
         try {
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
-            messageDigest.update(str.getBytes());
+            messageDigest.update(data);
             return messageDigest.digest();
         } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public static byte[] encrypt(byte[] data) {
+        try {
+            KeyGenerator keyGenerator = KeyGenerator.getInstance("DES");
+            SecretKey secretKey = keyGenerator.generateKey();
+
+            Cipher desCipher = Cipher.getInstance("DES");
+            desCipher.init(Cipher.ENCRYPT_MODE, secretKey);
+            return desCipher.doFinal(data);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException
+                | IllegalBlockSizeException | BadPaddingException e) {
             e.printStackTrace();
         }
 

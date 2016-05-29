@@ -4,6 +4,8 @@ import com.harryio.storj.model.Bucket;
 import com.harryio.storj.model.BucketModel;
 import com.harryio.storj.model.Frame;
 import com.harryio.storj.model.FrameModel;
+import com.harryio.storj.model.Shard;
+import com.harryio.storj.model.ShardModel;
 import com.harryio.storj.model.User;
 import com.harryio.storj.model.UserStatus;
 
@@ -14,6 +16,8 @@ import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
 import retrofit2.http.POST;
+import retrofit2.http.PUT;
+import retrofit2.http.Path;
 import retrofit2.http.Query;
 
 public interface StorjService {
@@ -31,4 +35,9 @@ public interface StorjService {
     @POST("frames")
     Call<Frame> createNewFrame(@Header("x-signature") String signature,
                                @Header("x-pubkey") String pubkey, @Body FrameModel frameModel);
+
+    @PUT("frames/{frame_id}")
+    Call<Shard> createNewShard(@Header("x-signature") String signature,
+                               @Header("x-pubkey") String pubkey, @Path("frame_id") String frameId,
+                               @Body ShardModel shardModel);
 }
