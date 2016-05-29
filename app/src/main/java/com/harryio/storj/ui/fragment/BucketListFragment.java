@@ -85,6 +85,10 @@ public class BucketListFragment extends Fragment {
         }
     }
 
+    public String getBucketId() {
+        return ((Bucket) gridView.getAdapter().getItem(0)).getId();
+    }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
