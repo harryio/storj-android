@@ -7,12 +7,14 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -23,13 +25,16 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.GridView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.harryio.storj.R;
 import com.harryio.storj.model.Bucket;
-import com.harryio.storj.ui.fragment.BucketListFragment;
+import com.harryio.storj.ui.adapter.BucketGridAdapter;
 import com.harryio.storj.ui.service.UploadService;
 import com.harryio.storj.util.ConnectionDetector;
 import com.harryio.storj.util.SharedPrefUtils;
@@ -39,6 +44,7 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import butterknife.Bind;
@@ -57,18 +63,29 @@ import static android.os.Environment.getExternalStoragePublicDirectory;
 
 @RuntimePermissions
 public class MainActivity extends AppCompatActivity implements
-        BucketListFragment.OnFragmentInteractionListener, Toolbar.OnMenuItemClickListener {
+        Toolbar.OnMenuItemClickListener {
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int REQUEST_CODE_CAPTURE_IMAGE = 100;
     private static final String IMAGE_DIRECTORY_NAME = "Storj";
 
     @Bind(R.id.toolbar)
     Toolbar toolbar;
+    @Bind(R.id.gridView)
+    GridView gridView;
+    @Bind(R.id.emptyView)
+    View emptyView;
+    @Bind(R.id.loading_view)
+    View loadingView;
+    @Bind(R.id.error_view)
+    View errorView;
+    @Bind(R.id.rootView)
+    View rootView;
 
     private ApiExecutor apiExecutor;
     private File imageFolder;
     private ProgressDialog deleteProgressDialog;
     private boolean bound = false;
+    private BucketGridAdapter bucketGridAdapter;
     private Uri fileUri;
     private UploadService.UploadBinder service;
     private ServiceConnection serviceConnection = new ServiceConnection() {
@@ -93,9 +110,6 @@ public class MainActivity extends AppCompatActivity implements
 
         apiExecutor = ApiExecutor.getInstance(this);
         MainActivityPermissionsDispatcher.setUpImageFolderWithCheck(this);
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.container, new BucketListFragment())
-                .commit();
         setUpToolbar();
 
         boolean isTutorialShown = SharedPrefUtils.instance(this)
@@ -103,6 +117,25 @@ public class MainActivity extends AppCompatActivity implements
         if (!isTutorialShown) {
             showTutorial();
         }
+
+        setUpGridView();
+        fetchBuckets();
+    }
+
+    private void setUpGridView() {
+        gridView.setEmptyView(emptyView);
+        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+            }
+        });
+        gridView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                return false;
+            }
+        });
     }
 
     private void setUpToolbar() {
@@ -133,6 +166,14 @@ public class MainActivity extends AppCompatActivity implements
                     }
                 });
         sequence.start();
+    }
+
+    private void fetchBuckets() {
+        if (ConnectionDetector.isConnectedToInternet(this)) {
+            new FetchBucketTask().execute();
+        } else {
+            showErrorView("No internet connection");
+        }
     }
 
     /*
@@ -201,14 +242,6 @@ public class MainActivity extends AppCompatActivity implements
                         service.startUploadService();
                         MainActivity.this.service.upload(fileUri);
                     }
-//                    Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.container);
-//                    if (fragment != null) {
-//                        BucketListFragment bucketListFragment = (BucketListFragment) fragment;
-//                        String bucketId = bucketListFragment.getBucketId();
-//                        if (!UploadService.isRunning()) {
-//                            service.startUploadService();
-//                        }
-//                    }
                     break;
             }
         }
@@ -271,6 +304,37 @@ public class MainActivity extends AppCompatActivity implements
         }
 
         return mediaStorageDir;
+    }
+
+    private void showLoadingView() {
+        gridView.setVisibility(View.GONE);
+        errorView.setVisibility(View.GONE);
+        loadingView.setVisibility(View.VISIBLE);
+    }
+
+    private void showErrorView(String message) {
+        gridView.setVisibility(View.GONE);
+        loadingView.setVisibility(View.GONE);
+        errorView.setVisibility(View.VISIBLE);
+
+        Snackbar snackbar = Snackbar.make(rootView, message, Snackbar.LENGTH_INDEFINITE)
+                .setAction("Retry", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        fetchBuckets();
+                    }
+                });
+        snackbar.setActionTextColor(Color.RED);
+        View sbView = snackbar.getView();
+        TextView textView = (TextView) sbView.findViewById(android.support.design.R.id.snackbar_text);
+        textView.setTextColor(Color.YELLOW);
+        snackbar.show();
+    }
+
+    private void showContentView() {
+        errorView.setVisibility(View.GONE);
+        loadingView.setVisibility(View.GONE);
+        gridView.setVisibility(View.VISIBLE);
     }
 
     @OnShowRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -403,16 +467,32 @@ public class MainActivity extends AppCompatActivity implements
             super.onPostExecute(bucket);
             progressDialog.dismiss();
             if (bucket != null) {
-                android.support.v4.app.Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.container);
-                if (fragment != null) {
-                    BucketListFragment bucketListFragment = (BucketListFragment) fragment;
-                    bucketListFragment.addNewBucket(bucket);
-                    showMessage("Bucket successfully created");
-                } else {
-                    showMessage("Oops! Seems like something went wrong");
-                }
+                bucketGridAdapter.addItem(bucket);
             } else {
                 showMessage("Failed to create bucket");
+            }
+        }
+    }
+
+    private class FetchBucketTask extends AsyncTask<Void, Void, List<Bucket>> {
+        @Override
+        protected void onPreExecute() {
+            showLoadingView();
+        }
+
+        @Override
+        protected List<Bucket> doInBackground(Void... params) {
+            return apiExecutor.fetchBuckets();
+        }
+
+        @Override
+        protected void onPostExecute(List<Bucket> buckets) {
+            if (buckets != null) {
+                bucketGridAdapter = new BucketGridAdapter(MainActivity.this, buckets);
+                gridView.setAdapter(bucketGridAdapter);
+                showContentView();
+            } else {
+                showErrorView("Network call failed");
             }
         }
     }

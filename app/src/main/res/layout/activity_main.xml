@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
+    android:id="@+id/rootView"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -19,14 +20,65 @@
             android:background="?attr/colorPrimary"
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
             app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-            app:title="Storj"
+            app:title="Storj Cloud"
             app:titleTextColor="@color/white"/>
 
     </android.support.design.widget.AppBarLayout>
 
     <FrameLayout
-        android:id="@+id/container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@color/grey_200"
+            tools:ignore="contentDescription"/>
+
+        <GridView
+            android:id="@+id/gridView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:columnWidth="124dp"
+            android:horizontalSpacing="2dp"
+            android:numColumns="auto_fit"
+            android:verticalSpacing="2dp"
+            tools:listitem="@layout/bucket_grid_item" />
+
+        <com.harryio.storj.ui.customview.StateView
+            android:id="@+id/emptyView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:imageId="@drawable/ic_folder_open"
+            app:text="No buckets!"/>
+
+        <FrameLayout
+            android:id="@+id/loading_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@color/grey_200"
+                tools:ignore="contentDescription"/>
+
+            <ProgressBar
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:indeterminate="true"/>
+
+        </FrameLayout>
+
+        <include
+            android:id="@+id/error_view"
+            layout="@layout/error_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="-48dp"
+            android:visibility="gone"/>
+
+    </FrameLayout>
 
 </LinearLayout>
