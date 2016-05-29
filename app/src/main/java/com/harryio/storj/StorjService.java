@@ -6,6 +6,7 @@ import com.harryio.storj.model.Frame;
 import com.harryio.storj.model.FrameModel;
 import com.harryio.storj.model.Shard;
 import com.harryio.storj.model.ShardModel;
+import com.harryio.storj.model.StorjFile;
 import com.harryio.storj.model.User;
 import com.harryio.storj.model.UserStatus;
 
@@ -40,4 +41,9 @@ public interface StorjService {
     Call<Shard> createNewShard(@Header("x-signature") String signature,
                                @Header("x-pubkey") String pubkey, @Path("frame_id") String frameId,
                                @Body ShardModel shardModel);
+
+    @GET("buckets/{id}/files")
+    Call<List<StorjFile>> fetchFiles(@Header("x-signature") String signature,
+                                     @Header("x-pubkey") String pubkey, @Path("id") String id,
+                                     @Query("__nonce") String nonce);
 }

@@ -7,19 +7,14 @@ import com.harryio.storj.util.ECUtils;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 
 public class HeaderGenerator {
     private static HeaderGenerator headerGenerator;
-    private PublicKey publicKey;
-    private PrivateKey privateKey;
+    private KeyPairDAO keyPairDAO;
     private String hexEncodedPublicKey;
 
     private HeaderGenerator(Context context) {
-        KeyPairDAO keyPairDAO = KeyPairDAO.getInstance(context);
-        publicKey = keyPairDAO.getPublicKey();
-        privateKey = keyPairDAO.getPrivateKey();
+        keyPairDAO = KeyPairDAO.getInstance(context);
     }
 
     public static HeaderGenerator getInstance(Context context) {
@@ -31,12 +26,12 @@ public class HeaderGenerator {
 
     public String getHexEncodedSignature(String method, String endpoint, String params) {
         String toBeSignedString = method + "\n" + endpoint + "\n" + params;
-        return ECUtils.getHexEncodedSignature(privateKey, toBeSignedString);
+        return ECUtils.getHexEncodedSignature(keyPairDAO.getPrivateKey(), toBeSignedString);
     }
 
     public String getHexEncodedPublicKey() throws IOException, InvalidKeyException {
         if (hexEncodedPublicKey == null) {
-            hexEncodedPublicKey = ECUtils.getHexEncodedPublicKey(publicKey);
+            hexEncodedPublicKey = ECUtils.getHexEncodedPublicKey(keyPairDAO.getPublicKey());
         }
 
         return hexEncodedPublicKey;

@@ -91,6 +91,7 @@ public class MainActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
+        apiExecutor = ApiExecutor.getInstance(this);
         MainActivityPermissionsDispatcher.setUpImageFolderWithCheck(this);
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.container, new BucketListFragment())
@@ -112,7 +113,7 @@ public class MainActivity extends AppCompatActivity implements
     private void showTutorial() {
         ShowcaseConfig config = new ShowcaseConfig();
         config.setDelay(200);
-        config.setMaskColor(ContextCompat.getColor(this, R.color.colorPrimaryDark_75));
+        config.setMaskColor(ContextCompat.getColor(this, R.color.black_75));
         config.setRenderOverNavigationBar(false);
         config.setContentTextColor(ContextCompat.getColor(this, R.color.white));
         config.setDismissTextColor(ContextCompat.getColor(this, R.color.colorAccent));

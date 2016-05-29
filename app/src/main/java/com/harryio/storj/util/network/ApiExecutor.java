@@ -12,6 +12,7 @@ import com.harryio.storj.model.Frame;
 import com.harryio.storj.model.FrameModel;
 import com.harryio.storj.model.Shard;
 import com.harryio.storj.model.ShardModel;
+import com.harryio.storj.model.StorjFile;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
@@ -137,6 +138,30 @@ public class ApiExecutor {
         } catch (InvalidKeyException | IOException e) {
             e.printStackTrace();
             Log.e(TAG, "createShard: call failed", e);
+        }
+
+        return null;
+    }
+
+    public List<StorjFile> fetchFiles(String bucketId) {
+        try {
+            String nonce = String.valueOf(System.currentTimeMillis());
+            String signature = headerGenerator.getHexEncodedSignature(METHOD_GET,
+                    "/buckets/" + bucketId + "/files", "__nonce==" + nonce);
+            String publickey = headerGenerator.getHexEncodedPublicKey();
+
+            Call<List<StorjFile>> call = storjService.fetchFiles(signature, publickey, bucketId, nonce);
+            Response<List<StorjFile>> response = call.execute();
+
+            if (response.isSuccessful()) {
+                Log.i(TAG, "fetchFiles: call successful");
+                return response.body();
+            } else {
+                Log.e(TAG, "fetchFiles: call failed");
+            }
+        } catch (InvalidKeyException | IOException e) {
+            e.printStackTrace();
+            Log.e(TAG, "fetchFiles: call failed", e);
         }
 
         return null;
