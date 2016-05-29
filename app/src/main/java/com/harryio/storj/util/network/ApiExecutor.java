@@ -160,7 +160,7 @@ public class ApiExecutor {
         try {
             String nonce = String.valueOf(System.currentTimeMillis());
             String signature = headerGenerator.getHexEncodedSignature(METHOD_GET,
-                    "/buckets/" + bucketId + "/files", "__nonce==" + nonce);
+                    "/buckets/" + bucketId + "/files", "__nonce=" + nonce);
             String publickey = headerGenerator.getHexEncodedPublicKey();
 
             Call<List<StorjFile>> call = storjService.fetchFiles(signature, publickey, bucketId, nonce);

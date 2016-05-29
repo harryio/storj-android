@@ -127,7 +127,10 @@ public class MainActivity extends AppCompatActivity implements
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
+                Bucket bucket = (Bucket) parent.getItemAtPosition(position);
+                Intent intent = BucketFilesActivity.getCallingIntent(MainActivity.this,
+                        bucket.getId(), bucket.getName());
+                startActivity(intent);
             }
         });
         gridView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
