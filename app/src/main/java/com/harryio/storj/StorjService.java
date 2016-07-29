@@ -1,7 +1,9 @@
 package com.harryio.storj;
 
 import com.harryio.storj.model.Bucket;
-import com.harryio.storj.model.BucketModel;
+import com.harryio.storj.model.BucketEntry;
+import com.harryio.storj.model.BucketEntryModel;
+import com.harryio.storj.model.CreateBucketModel;
 import com.harryio.storj.model.Frame;
 import com.harryio.storj.model.FrameModel;
 import com.harryio.storj.model.Shard;
@@ -31,7 +33,7 @@ public interface StorjService {
 
     @POST("buckets")
     Call<Bucket> createNewBucket(@Header("x-signature") String signature,
-                                 @Header("x-pubkey") String pubkey, @Body BucketModel bucketModel);
+                                 @Header("x-pubkey") String pubkey, @Body CreateBucketModel createBucketModel);
 
     @POST("frames")
     Call<Frame> createNewFrame(@Header("x-signature") String signature,
@@ -46,4 +48,9 @@ public interface StorjService {
     Call<List<StorjFile>> fetchFiles(@Header("x-signature") String signature,
                                      @Header("x-pubkey") String pubkey, @Path("id") String id,
                                      @Query("__nonce") String nonce);
+
+    @POST("buckets/{id}/files")
+    Call<BucketEntry> storeFile(@Header("x-signature") String signature,
+                                @Header("x-pubkey") String pubkey, @Path("id") String id,
+                                @Body BucketEntryModel bucketEntryModel);
 }

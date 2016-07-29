@@ -8,19 +8,35 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
-import com.harryio.storj.database.KeyPairDAO;
+import com.google.gson.Gson;
+import com.harryio.storj.model.AuthorizationModel;
+import com.harryio.storj.model.BucketEntry;
+import com.harryio.storj.model.BucketEntryModel;
 import com.harryio.storj.model.Frame;
 import com.harryio.storj.model.FrameModel;
-import com.harryio.storj.util.Crypto;
+import com.harryio.storj.model.Shard;
+import com.harryio.storj.model.ShardModel;
+import com.harryio.storj.util.EncryptUtils;
 import com.harryio.storj.util.FileUtils;
+import com.harryio.storj.util.ShardUtils;
+import com.harryio.storj.util.SharedPrefUtils;
 import com.harryio.storj.util.network.ApiExecutor;
+import com.harryio.storj.util.network.StorjWebSocketAdapter;
+import com.neovisionaries.ws.client.WebSocket;
+import com.neovisionaries.ws.client.WebSocketFactory;
 
 import java.io.File;
-import java.security.PrivateKey;
-import java.util.Arrays;
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+
+import javax.crypto.NoSuchPaddingException;
 
 public class UploadService extends Service {
     private static final String TAG = UploadService.class.getSimpleName();
+
     private static boolean running = false;
     private ApiExecutor apiExecutor;
 
@@ -40,7 +56,7 @@ public class UploadService extends Service {
     }
 
     private void uploadFile(File file) {
-        new UploadFile(file).execute();
+        new CreateFrame(file).execute();
     }
 
     public class UploadBinder extends Binder {
@@ -64,10 +80,6 @@ public class UploadService extends Service {
         private File file;
         private String frameId;
 
-        public UploadFile(File file) {
-            this.file = file;
-        }
-
         public UploadFile(File file, String frameId) {
             this.file = file;
             this.frameId = frameId;
@@ -75,64 +87,73 @@ public class UploadService extends Service {
 
         @Override
         protected Void doInBackground(Void... params) {
-            KeyPairDAO keyPairDAO = KeyPairDAO.getInstance(UploadService.this);
-            PrivateKey privateKey = keyPairDAO.getPrivateKey();
+            boolean shouldCreateFile = false;
+            try {
+                File encryptedFile = File.createTempFile(file.getName(), null);
+                //todo provide UI for setting encryption password
+                EncryptUtils.encrypt(file, encryptedFile, "Password");
 
-            byte[] originalFileBytes = FileUtils.fileToByteArray(file);
-            Log.i(TAG, "Original file bytes: " + originalFileBytes.length);
-            byte[] paddedFileArray = FileUtils.getPaddedByteArray(file);
-            Log.i(TAG, "Padded file bytes: " + paddedFileArray.length);
-            byte[] encryptedFileArray = Crypto.encrypt(paddedFileArray);
-            Log.i(TAG, "Encrypted file bytes: " + encryptedFileArray.length);
+                List<ShardModel> shards = ShardUtils.getShards(encryptedFile);
+                for (int i = 0, length = shards.size(); i < length; ++i) {
+                    final ShardModel shardModel = shards.get(i);
+                    Shard shard = apiExecutor.createShard(shardModel, frameId);
 
-            int length = encryptedFileArray.length;
-            byte[] array1 = Arrays.copyOfRange(encryptedFileArray, 0, (length / 2) - 1);
-            byte[] array2 = Arrays.copyOfRange(encryptedFileArray, length / 2, length - 1);
-            byte[][] byteArray = new byte[][]{array1, array2};
+                    if (shard != null) {
+                        try {
+                            AuthorizationModel authModel = new AuthorizationModel(
+                                    shard.getHash(), shard.getOperation(), shard.getToken());
+                            Gson gson = new Gson();
+                            final String authJson = gson.toJson(authModel, AuthorizationModel.class);
+                            Log.i(TAG, "Json String: " + authJson);
 
-//            for (int i = 0; i < byteArray.length; i++) {
-//                byte[] filePart = byteArray[i];
-//                String hash = Hex.toHexString(Crypto.sha256Digest(filePart));
-//                ShardModel shardModel = new ShardModel(hash, filePart.length, i,
-//                        new String[] {"2128bc38ed5140bb9ba8ddac16183eecc4c9ef63b0cd46b30f49b578737a7a52"},
-//                        new String[] {"507f1f77bcf86cd799439011"});
-//
-//                Shard shard = apiExecutor.createShard(shardModel, frameId);
-//                Log.i(TAG, "Shard: " + shard);
-//                if (shard != null) {
-//                    String channel = shard.getChannel();
-//                    String port = channel.substring(channel.lastIndexOf(":") + 1);
-//                    String hostname = channel.substring(1, channel.lastIndexOf(":"));
-//
-//                    JSONObject jsonObject = new JSONObject();
-//                    try {
-//                        jsonObject.put("token", shard.getToken());
-//                        jsonObject.put("hash", shard.getHash());
-//                        jsonObject.put("operation", shard.getOperation());
-//                        String jsonString = jsonObject.toString();
-//
-//                        Socket socket = new Socket(hostname, Integer.parseInt(port));
-//                        DataOutputStream dataOutputStream =
-//                                new DataOutputStream(socket.getOutputStream());
-//                        dataOutputStream.writeUTF(jsonString);
-//                        dataOutputStream.write(filePart);
-//                        dataOutputStream.close();
-//
-//                        BufferedReader reader = new BufferedReader(
-//                                new InputStreamReader(socket.getInputStream()));
-//                        StringBuilder stringBuilder = new StringBuilder();
-//                        String line;
-//                        while ((line = reader.readLine()) != null) {
-//                            stringBuilder.append(line).append("\n");
-//                        }
-//
-//                        Log.i(TAG, "Farmer output response:\n" + stringBuilder);
-//                    } catch (JSONException | IOException | NullPointerException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }
+                            final Shard.Farmer farmer = shard.getFarmer();
+                            String port = farmer.getPort();
+                            String hostname = farmer.getAddress();
+                            String farmerAddress = "ws://" + hostname + ":" + port;
 
+                            WebSocket webSocket = new WebSocketFactory()
+                                    .createSocket(farmerAddress);
+                            final CountDownLatch latch = new CountDownLatch(1);
+                            webSocket.addListener(new StorjWebSocketAdapter(shardModel.getShardPath(),
+                                    authJson, latch));
+                            webSocket.connectAsynchronously();
+                            latch.await();
+                            shouldCreateFile = true;
+                        } catch (InterruptedException  e) {
+                            e.printStackTrace();
+                            shouldCreateFile = false;
+                        }
+                    } else {
+                        shouldCreateFile = false;
+                    }
+
+                    File shardFile = new File(shardModel.getShardPath());
+                    shardFile.delete();
+                }
+
+                encryptedFile.delete();
+
+                if (shouldCreateFile) {
+                    String mimetype = FileUtils.getMimeType(file);
+                    String filename = file.getName();
+                    BucketEntryModel bucketEntryModel =
+                            new BucketEntryModel(frameId, mimetype, filename);
+
+                    String bucketId = SharedPrefUtils.instance(UploadService.this)
+                            .getString(SharedPrefUtils.KEY_DEFAULT_BUCKET_ID, null);
+                    if (bucketId != null) {
+                        BucketEntry bucketEntry = apiExecutor.storeFileInBucket(bucketEntryModel, bucketId);
+                        if (bucketEntry != null) {
+                            Log.i(TAG, bucketEntry.toString());
+                        }
+                    } else {
+                        Log.e(TAG, "Bucket Id is null");
+                    }
+                }
+            } catch (IOException | NoSuchPaddingException | NoSuchAlgorithmException |
+                    InvalidKeyException | NullPointerException e) {
+                e.printStackTrace();
+            }
             return null;
         }
 

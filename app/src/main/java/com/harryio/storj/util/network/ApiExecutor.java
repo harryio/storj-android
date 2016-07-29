@@ -8,7 +8,9 @@ import com.harryio.storj.StorjService;
 import com.harryio.storj.StorjServiceProvider;
 import com.harryio.storj.database.KeyPairDAO;
 import com.harryio.storj.model.Bucket;
-import com.harryio.storj.model.BucketModel;
+import com.harryio.storj.model.BucketEntry;
+import com.harryio.storj.model.BucketEntryModel;
+import com.harryio.storj.model.CreateBucketModel;
 import com.harryio.storj.model.Frame;
 import com.harryio.storj.model.FrameModel;
 import com.harryio.storj.model.Shard;
@@ -61,13 +63,13 @@ public class ApiExecutor {
 
     public Bucket createBucket(int storage, int transfer, String bucketName) {
         try {
-            BucketModel bucketModel = new BucketModel(storage, transfer,
+            CreateBucketModel createBucketModel = new CreateBucketModel(storage, transfer,
                     Collections.singletonList(headerGenerator.getHexEncodedPublicKey()), bucketName);
-            String bucketModelJson = gson.toJson(bucketModel);
+            String bucketModelJson = gson.toJson(createBucketModel);
             String signature = headerGenerator.getHexEncodedSignature(METHOD_POST, "/buckets", bucketModelJson);
             String publicKey = headerGenerator.getHexEncodedPublicKey();
 
-            Call<Bucket> call = storjService.createNewBucket(signature, publicKey, bucketModel);
+            Call<Bucket> call = storjService.createNewBucket(signature, publicKey, createBucketModel);
             Response<Bucket> response = call.execute();
 
             if (response.isSuccessful()) {
@@ -175,6 +177,30 @@ public class ApiExecutor {
         } catch (InvalidKeyException | IOException | NullPointerException e) {
             e.printStackTrace();
             Log.e(TAG, "fetchFiles: call failed", e);
+        }
+
+        return null;
+    }
+
+    public BucketEntry storeFileInBucket(BucketEntryModel bucketEntryModel, String bucketId) {
+        try {
+            String storeFileJson = gson.toJson(bucketEntryModel);
+            String signature = headerGenerator.getHexEncodedSignature(METHOD_POST,
+                    "/buckets/" + bucketId + "/files", storeFileJson);
+            String publicKey = headerGenerator.getHexEncodedPublicKey();
+
+            Call<BucketEntry> call = storjService.storeFile(signature, publicKey, bucketId, bucketEntryModel);
+            Response<BucketEntry> response = call.execute();
+
+            if (response.isSuccessful()) {
+                Log.i(TAG, "storeFileInBucket: call successfull");
+                return response.body();
+            } else {
+                Log.e(TAG, "storeFileInBucket: call failed");
+            }
+        } catch (IOException | InvalidKeyException e) {
+            e.printStackTrace();
+            Log.e(TAG, "storeFileInBucket: call failed", e);
         }
 
         return null;
