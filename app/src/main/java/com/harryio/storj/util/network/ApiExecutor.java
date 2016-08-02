@@ -61,151 +61,6 @@ public class ApiExecutor {
         return apiExecutor;
     }
 
-    public Bucket createBucket(int storage, int transfer, String bucketName) {
-        try {
-            CreateBucketModel createBucketModel = new CreateBucketModel(storage, transfer,
-                    Collections.singletonList(headerGenerator.getHexEncodedPublicKey()), bucketName);
-            String bucketModelJson = gson.toJson(createBucketModel);
-            String signature = headerGenerator.getHexEncodedSignature(METHOD_POST, "/buckets", bucketModelJson);
-            String publicKey = headerGenerator.getHexEncodedPublicKey();
-
-            Call<Bucket> call = storjService.createNewBucket(signature, publicKey, createBucketModel);
-            Response<Bucket> response = call.execute();
-
-            if (response.isSuccessful()) {
-                Log.i(TAG, "createBucket: call successful");
-                return response.body();
-            } else {
-                Log.e(TAG, "createBucket: call failed");
-            }
-        } catch (IOException | InvalidKeyException | NullPointerException e) {
-            e.printStackTrace();
-            Log.e(TAG, "createBucket: call failed", e);
-        }
-
-        return null;
-    }
-
-    public List<Bucket> fetchBuckets() {
-        try {
-            String nonce = String.valueOf(System.currentTimeMillis());
-            String signature = headerGenerator.getHexEncodedSignature(METHOD_GET,
-                    "/buckets", "__nonce=" + nonce);
-            String publicKey = headerGenerator.getHexEncodedPublicKey();
-
-            Call<List<Bucket>> call = storjService.fetchBuckets(signature, publicKey, nonce);
-            Response<List<Bucket>> response = call.execute();
-
-            if (response.isSuccessful()) {
-                Log.i(TAG, "fetchBuckets: call successful");
-                return response.body();
-            } else {
-                Log.e(TAG, "fetchBuckets: call failed");
-            }
-        } catch (IOException | InvalidKeyException | NullPointerException e) {
-            e.printStackTrace();
-            Log.e(TAG, "fetchBuckets: call failed", e);
-        }
-
-        return null;
-    }
-
-    public Frame createFrame(FrameModel frameModel) {
-        try {
-            String frameModelJson = gson.toJson(frameModel);
-            String signature = headerGenerator.getHexEncodedSignature(METHOD_POST,
-                    "/frames", frameModelJson);
-            String publickey = headerGenerator.getHexEncodedPublicKey();
-
-            Call<Frame> call = storjService.createNewFrame(signature, publickey, frameModel);
-            Response<Frame> response = call.execute();
-
-            if (response.isSuccessful()) {
-                Log.i(TAG, "createFrame: call successful");
-                return response.body();
-            } else {
-                Log.e(TAG, "createFrame: call failed");
-            }
-        } catch (InvalidKeyException | IOException | NullPointerException e) {
-            e.printStackTrace();
-            Log.e(TAG, "createFrame: call failed", e);
-        }
-
-        return null;
-    }
-
-    public Shard createShard(ShardModel shardModel, String frameId) {
-        try {
-            String shardModelJson = gson.toJson(shardModel);
-            String signature = headerGenerator.getHexEncodedSignature(METHOD_PUT,
-                    "/frames/" + frameId, shardModelJson);
-            String publickey = headerGenerator.getHexEncodedPublicKey();
-
-            Call<Shard> call = storjService.createNewShard(signature, publickey, frameId, shardModel);
-            Response<Shard> response = call.execute();
-
-            if (response.isSuccessful()) {
-                Log.i(TAG, "createShard: call successful");
-                return response.body();
-            } else {
-                Log.e(TAG, "createShard: call failed");
-            }
-        } catch (InvalidKeyException | IOException | NullPointerException e) {
-            e.printStackTrace();
-            Log.e(TAG, "createShard: call failed", e);
-        }
-
-        return null;
-    }
-
-    public List<StorjFile> fetchFiles(String bucketId) {
-        try {
-            String nonce = String.valueOf(System.currentTimeMillis());
-            String signature = headerGenerator.getHexEncodedSignature(METHOD_GET,
-                    "/buckets/" + bucketId + "/files", "__nonce=" + nonce);
-            String publickey = headerGenerator.getHexEncodedPublicKey();
-
-            Call<List<StorjFile>> call = storjService.fetchFiles(signature, publickey, bucketId, nonce);
-            Response<List<StorjFile>> response = call.execute();
-
-            if (response.isSuccessful()) {
-                Log.i(TAG, "fetchFiles: call successful");
-                return response.body();
-            } else {
-                Log.e(TAG, "fetchFiles: call failed");
-            }
-        } catch (InvalidKeyException | IOException | NullPointerException e) {
-            e.printStackTrace();
-            Log.e(TAG, "fetchFiles: call failed", e);
-        }
-
-        return null;
-    }
-
-    public BucketEntry storeFileInBucket(BucketEntryModel bucketEntryModel, String bucketId) {
-        try {
-            String storeFileJson = gson.toJson(bucketEntryModel);
-            String signature = headerGenerator.getHexEncodedSignature(METHOD_POST,
-                    "/buckets/" + bucketId + "/files", storeFileJson);
-            String publicKey = headerGenerator.getHexEncodedPublicKey();
-
-            Call<BucketEntry> call = storjService.storeFile(signature, publicKey, bucketId, bucketEntryModel);
-            Response<BucketEntry> response = call.execute();
-
-            if (response.isSuccessful()) {
-                Log.i(TAG, "storeFileInBucket: call successfull");
-                return response.body();
-            } else {
-                Log.e(TAG, "storeFileInBucket: call failed");
-            }
-        } catch (IOException | InvalidKeyException e) {
-            e.printStackTrace();
-            Log.e(TAG, "storeFileInBucket: call failed", e);
-        }
-
-        return null;
-    }
-
     public UserStatus registerUser(String email, String password) {
         try {
             //SHA-256 digest of password
@@ -239,6 +94,177 @@ public class ApiExecutor {
         } catch (InvalidAlgorithmParameterException | NoSuchProviderException | IOException | NullPointerException | InvalidKeyException e) {
             e.printStackTrace();
         }
+        return null;
+    }
+
+    public Bucket createBucket(int storage, int transfer, String bucketName) {
+        try {
+            CreateBucketModel createBucketModel = new CreateBucketModel(storage, transfer,
+                    Collections.singletonList(headerGenerator.getPublicKeyHeader()), bucketName);
+            String bucketModelJson = gson.toJson(createBucketModel);
+            String signature = headerGenerator.getSignatureHeader(METHOD_POST, "/buckets", bucketModelJson);
+            String publicKey = headerGenerator.getPublicKeyHeader();
+
+            Call<Bucket> call = storjService.createNewBucket(signature, publicKey, createBucketModel);
+            Response<Bucket> response = call.execute();
+
+            if (response.isSuccessful()) {
+                Log.i(TAG, "createBucket: call successful");
+                return response.body();
+            } else {
+                Log.e(TAG, "createBucket: call failed");
+            }
+        } catch (IOException | InvalidKeyException | NullPointerException e) {
+            e.printStackTrace();
+            Log.e(TAG, "createBucket: call failed", e);
+        }
+
+        return null;
+    }
+
+    public List<Bucket> fetchBuckets() {
+        try {
+            String nonce = String.valueOf(System.currentTimeMillis());
+            String signature = headerGenerator.getSignatureHeader(METHOD_GET,
+                    "/buckets", "__nonce=" + nonce);
+            String publicKey = headerGenerator.getPublicKeyHeader();
+
+            Call<List<Bucket>> call = storjService.fetchBuckets(signature, publicKey, nonce);
+            Response<List<Bucket>> response = call.execute();
+
+            if (response.isSuccessful()) {
+                Log.i(TAG, "fetchBuckets: call successful");
+                return response.body();
+            } else {
+                Log.e(TAG, "fetchBuckets: call failed");
+            }
+        } catch (IOException | InvalidKeyException | NullPointerException e) {
+            e.printStackTrace();
+            Log.e(TAG, "fetchBuckets: call failed", e);
+        }
+
+        return null;
+    }
+
+    public List<StorjFile> fetchFiles(String bucketId) {
+        try {
+            String nonce = String.valueOf(System.currentTimeMillis());
+            String signature = headerGenerator.getSignatureHeader(METHOD_GET,
+                    "/buckets/" + bucketId + "/files", "__nonce=" + nonce);
+            String publickey = headerGenerator.getPublicKeyHeader();
+
+            Call<List<StorjFile>> call = storjService.fetchFiles(signature, publickey, bucketId, nonce);
+            Response<List<StorjFile>> response = call.execute();
+
+            if (response.isSuccessful()) {
+                Log.i(TAG, "fetchFiles: call successful");
+                return response.body();
+            } else {
+                Log.e(TAG, "fetchFiles: call failed");
+            }
+        } catch (InvalidKeyException | IOException | NullPointerException e) {
+            e.printStackTrace();
+            Log.e(TAG, "fetchFiles: call failed", e);
+        }
+
+        return null;
+    }
+
+    public Frame createFrame(FrameModel frameModel) {
+        try {
+            String frameModelJson = gson.toJson(frameModel);
+            String signature = headerGenerator.getSignatureHeader(METHOD_POST,
+                    "/frames", frameModelJson);
+            String publickey = headerGenerator.getPublicKeyHeader();
+
+            Call<Frame> call = storjService.createNewFrame(signature, publickey, frameModel);
+            Response<Frame> response = call.execute();
+
+            if (response.isSuccessful()) {
+                Log.i(TAG, "createFrame: call successful");
+                return response.body();
+            } else {
+                Log.e(TAG, "createFrame: call failed");
+            }
+        } catch (InvalidKeyException | IOException | NullPointerException e) {
+            e.printStackTrace();
+            Log.e(TAG, "createFrame: call failed", e);
+        }
+
+        return null;
+    }
+
+    public Shard createShard(ShardModel shardModel, String frameId) {
+        try {
+            String shardModelJson = gson.toJson(shardModel);
+            String signature = headerGenerator.getSignatureHeader(METHOD_PUT,
+                    "/frames/" + frameId, shardModelJson);
+            String publickey = headerGenerator.getPublicKeyHeader();
+
+            Call<Shard> call = storjService.createNewShard(signature, publickey, frameId, shardModel);
+            Response<Shard> response = call.execute();
+
+            if (response.isSuccessful()) {
+                Log.i(TAG, "createShard: call successful");
+                return response.body();
+            } else {
+                Log.e(TAG, "createShard: call failed");
+            }
+        } catch (InvalidKeyException | IOException | NullPointerException e) {
+            e.printStackTrace();
+            Log.e(TAG, "createShard: call failed", e);
+        }
+
+        return null;
+    }
+
+    public Shard createShard(ShardModel shardModel, String frameId,
+                             String username, String password) {
+        try {
+            String authHeader = HeaderGenerator.getAuthHeader(username, password);
+            Log.i(TAG, "Authorization Header: " + authHeader);
+
+            Call<Shard> call = storjService.createNewShard(authHeader, frameId, shardModel);
+            Response<Shard> response = call.execute();
+
+            if (response.isSuccessful()) {
+                Log.i(TAG, "createShard: call successful");
+                return response.body();
+            } else {
+                Log.e(TAG, "createShard: call failed");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.e(TAG, "createShard: call failed", e);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            Log.i(TAG, "createShard: encryption failed");
+        }
+
+        return null;
+    }
+
+    public BucketEntry storeFileInBucket(BucketEntryModel bucketEntryModel, String bucketId) {
+        try {
+            String storeFileJson = gson.toJson(bucketEntryModel);
+            String signature = headerGenerator.getSignatureHeader(METHOD_POST,
+                    "/buckets/" + bucketId + "/files", storeFileJson);
+            String publicKey = headerGenerator.getPublicKeyHeader();
+
+            Call<BucketEntry> call = storjService.storeFile(signature, publicKey, bucketId, bucketEntryModel);
+            Response<BucketEntry> response = call.execute();
+
+            if (response.isSuccessful()) {
+                Log.i(TAG, "storeFileInBucket: call successful");
+                return response.body();
+            } else {
+                Log.e(TAG, "storeFileInBucket: call failed");
+            }
+        } catch (IOException | InvalidKeyException e) {
+            e.printStackTrace();
+            Log.e(TAG, "storeFileInBucket: call failed", e);
+        }
+
         return null;
     }
 }

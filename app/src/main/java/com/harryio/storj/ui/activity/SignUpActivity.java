@@ -16,7 +16,7 @@ import android.widget.Toast;
 import com.harryio.storj.R;
 import com.harryio.storj.model.UserStatus;
 import com.harryio.storj.util.ConnectionDetector;
-import com.harryio.storj.util.SharedPrefUtils;
+import com.harryio.storj.util.PrefUtils;
 import com.harryio.storj.util.network.ApiExecutor;
 
 import butterknife.Bind;
@@ -129,8 +129,10 @@ public class SignUpActivity extends AppCompatActivity {
             progressDialog.dismiss();
             if (userStatus != null) {
                 //Sign up was successful
-                SharedPrefUtils.instance(SignUpActivity.this)
-                        .storeBoolean(SharedPrefUtils.KEY_IS_USER_LOGGED_IN, true);
+                final PrefUtils prefUtils = PrefUtils.instance(SignUpActivity.this);
+                prefUtils.storeBoolean(PrefUtils.KEY_IS_USER_LOGGED_IN, true);
+                prefUtils.storeString(PrefUtils.KEY_USERNAME, email);
+                prefUtils.storeString(PrefUtils.KEY_PASSWORD, password);
                 showActivateAccountDialog();
             } else {
                 Toast.makeText(SignUpActivity.this, "Sign Up Failed", Toast.LENGTH_SHORT).show();

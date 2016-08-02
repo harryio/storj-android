@@ -44,6 +44,10 @@ public interface StorjService {
                                @Header("x-pubkey") String pubkey, @Path("frame_id") String frameId,
                                @Body ShardModel shardModel);
 
+    @PUT("frames/{frame_id}")
+    Call<Shard> createNewShard(@Header("Authorization") String auth, @Path("frame_id") String frameId,
+                               @Body ShardModel shardModel);
+
     @GET("buckets/{id}/files")
     Call<List<StorjFile>> fetchFiles(@Header("x-signature") String signature,
                                      @Header("x-pubkey") String pubkey, @Path("id") String id,

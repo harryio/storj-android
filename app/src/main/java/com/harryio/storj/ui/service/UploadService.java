@@ -18,8 +18,8 @@ import com.harryio.storj.model.Shard;
 import com.harryio.storj.model.ShardModel;
 import com.harryio.storj.util.EncryptUtils;
 import com.harryio.storj.util.FileUtils;
+import com.harryio.storj.util.PrefUtils;
 import com.harryio.storj.util.ShardUtils;
-import com.harryio.storj.util.SharedPrefUtils;
 import com.harryio.storj.util.network.ApiExecutor;
 import com.harryio.storj.util.network.StorjWebSocketAdapter;
 import com.neovisionaries.ws.client.WebSocket;
@@ -33,6 +33,9 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import javax.crypto.NoSuchPaddingException;
+
+import static com.harryio.storj.util.PrefUtils.KEY_PASSWORD;
+import static com.harryio.storj.util.PrefUtils.KEY_USERNAME;
 
 public class UploadService extends Service {
     private static final String TAG = UploadService.class.getSimpleName();
@@ -87,7 +90,6 @@ public class UploadService extends Service {
 
         @Override
         protected Void doInBackground(Void... params) {
-            boolean shouldCreateFile = false;
             try {
                 File encryptedFile = File.createTempFile(file.getName(), null);
                 //todo provide UI for setting encryption password
@@ -96,7 +98,11 @@ public class UploadService extends Service {
                 List<ShardModel> shards = ShardUtils.getShards(encryptedFile);
                 for (int i = 0, length = shards.size(); i < length; ++i) {
                     final ShardModel shardModel = shards.get(i);
-                    Shard shard = apiExecutor.createShard(shardModel, frameId);
+                    final PrefUtils prefUtils = PrefUtils.instance(UploadService.this);
+                    String username = prefUtils.getString(KEY_USERNAME, "");
+                    String password = prefUtils.getString(KEY_PASSWORD, "");
+
+                    Shard shard = apiExecutor.createShard(shardModel, frameId, username, password);
 
                     if (shard != null) {
                         try {
@@ -118,13 +124,9 @@ public class UploadService extends Service {
                                     authJson, latch));
                             webSocket.connectAsynchronously();
                             latch.await();
-                            shouldCreateFile = true;
                         } catch (InterruptedException  e) {
                             e.printStackTrace();
-                            shouldCreateFile = false;
                         }
-                    } else {
-                        shouldCreateFile = false;
                     }
 
                     File shardFile = new File(shardModel.getShardPath());
@@ -133,22 +135,20 @@ public class UploadService extends Service {
 
                 encryptedFile.delete();
 
-                if (shouldCreateFile) {
-                    String mimetype = FileUtils.getMimeType(file);
-                    String filename = file.getName();
-                    BucketEntryModel bucketEntryModel =
-                            new BucketEntryModel(frameId, mimetype, filename);
+                String mimetype = FileUtils.getMimeType(file);
+                String filename = file.getName();
+                BucketEntryModel bucketEntryModel =
+                        new BucketEntryModel(frameId, mimetype, filename);
 
-                    String bucketId = SharedPrefUtils.instance(UploadService.this)
-                            .getString(SharedPrefUtils.KEY_DEFAULT_BUCKET_ID, null);
-                    if (bucketId != null) {
-                        BucketEntry bucketEntry = apiExecutor.storeFileInBucket(bucketEntryModel, bucketId);
-                        if (bucketEntry != null) {
-                            Log.i(TAG, bucketEntry.toString());
-                        }
-                    } else {
-                        Log.e(TAG, "Bucket Id is null");
+                String bucketId = PrefUtils.instance(UploadService.this)
+                        .getString(PrefUtils.KEY_DEFAULT_BUCKET_ID, null);
+                if (bucketId != null) {
+                    BucketEntry bucketEntry = apiExecutor.storeFileInBucket(bucketEntryModel, bucketId);
+                    if (bucketEntry != null) {
+                        Log.i(TAG, bucketEntry.toString());
                     }
+                } else {
+                    Log.e(TAG, "Bucket Id is null");
                 }
             } catch (IOException | NoSuchPaddingException | NoSuchAlgorithmException |
                     InvalidKeyException | NullPointerException e) {

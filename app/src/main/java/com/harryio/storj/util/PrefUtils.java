@@ -3,29 +3,27 @@ package com.harryio.storj.util;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-public class SharedPrefUtils {
+public class PrefUtils {
     public static final String KEY_IS_USER_LOGGED_IN = "com.harryio.IS_USER_LOGGED_IN";
     public static final String KEY_IS_TUTORIAL_SHOWN = "com.harryio.IS_TUTORIAL_SHOWN";
     public static final String KEY_DEFAULT_BUCKET_ID = "com.harryio.DEFAULT_BUCKET_ID";
+    public static final String KEY_USERNAME = "com.harryio.KEY_USERNAME";
+    public static final String KEY_PASSWORD = "com.harryio.PASSWORD";
 
     private static final String PREF_NAME = "StorjPrefs";
-    private static SharedPrefUtils sharedPrefUtils;
+    private static PrefUtils prefUtils;
     private SharedPreferences sharedPreferences;
 
-    private SharedPrefUtils(Context context) {
+    private PrefUtils(Context context) {
         sharedPreferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
     }
 
-    public static SharedPrefUtils instance(Context context) {
-        if (sharedPrefUtils == null) {
-            sharedPrefUtils = new SharedPrefUtils(context.getApplicationContext());
+    public static PrefUtils instance(Context context) {
+        if (prefUtils == null) {
+            prefUtils = new PrefUtils(context.getApplicationContext());
         }
 
-        return sharedPrefUtils;
-    }
-
-    public SharedPreferences getSharedPreferences() {
-        return sharedPreferences;
+        return prefUtils;
     }
 
     public void storeBoolean(String key, boolean value) {

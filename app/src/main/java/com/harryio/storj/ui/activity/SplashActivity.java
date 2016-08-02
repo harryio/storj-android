@@ -6,7 +6,7 @@ import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 
 import com.harryio.storj.R;
-import com.harryio.storj.util.SharedPrefUtils;
+import com.harryio.storj.util.PrefUtils;
 
 public class SplashActivity extends AppCompatActivity {
     @Override
@@ -22,9 +22,9 @@ public class SplashActivity extends AppCompatActivity {
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                boolean isUserLoggedIn = SharedPrefUtils
+                boolean isUserLoggedIn = PrefUtils
                         .instance(SplashActivity.this)
-                        .getBoolean(SharedPrefUtils.KEY_IS_USER_LOGGED_IN, false);
+                        .getBoolean(PrefUtils.KEY_IS_USER_LOGGED_IN, false);
 
                 Intent intent = isUserLoggedIn ?
                         new Intent(SplashActivity.this, MainActivity.class) :

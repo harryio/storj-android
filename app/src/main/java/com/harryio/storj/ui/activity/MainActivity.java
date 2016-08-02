@@ -37,7 +37,7 @@ import com.harryio.storj.model.Bucket;
 import com.harryio.storj.ui.adapter.BucketAdapter;
 import com.harryio.storj.ui.service.UploadService;
 import com.harryio.storj.util.ConnectionDetector;
-import com.harryio.storj.util.SharedPrefUtils;
+import com.harryio.storj.util.PrefUtils;
 import com.harryio.storj.util.network.ApiExecutor;
 
 import java.io.File;
@@ -82,7 +82,7 @@ public class MainActivity extends AppCompatActivity implements
     View rootView;
 
     private ApiExecutor apiExecutor;
-    private SharedPrefUtils prefUtils;
+    private PrefUtils prefUtils;
     private File imageFolder;
     private ProgressDialog deleteProgressDialog;
     private boolean bound = false;
@@ -113,9 +113,9 @@ public class MainActivity extends AppCompatActivity implements
         MainActivityPermissionsDispatcher.setUpImageFolderWithCheck(this);
         setUpToolbar();
 
-        prefUtils = SharedPrefUtils.instance(this);
+        prefUtils = PrefUtils.instance(this);
         boolean isTutorialShown = prefUtils
-                .getBoolean(SharedPrefUtils.KEY_IS_TUTORIAL_SHOWN, false);
+                .getBoolean(PrefUtils.KEY_IS_TUTORIAL_SHOWN, false);
         if (!isTutorialShown) {
             showTutorial();
         }
@@ -146,7 +146,7 @@ public class MainActivity extends AppCompatActivity implements
                             public void onClick(DialogInterface dialog, int which) {
                                 Bucket bucket = (Bucket) parent.getItemAtPosition(position);
                                 String bucketId = bucket.getId();
-                                prefUtils.storeString(SharedPrefUtils.KEY_DEFAULT_BUCKET_ID, bucketId);
+                                prefUtils.storeString(PrefUtils.KEY_DEFAULT_BUCKET_ID, bucketId);
                                 bucketAdapter.setDefaultBucketId(bucketId);
                                 bucketAdapter.notifyDataSetChanged();
                             }
@@ -182,8 +182,8 @@ public class MainActivity extends AppCompatActivity implements
                 .setOnItemDismissedListener(new MaterialShowcaseSequence.OnSequenceItemDismissedListener() {
                     @Override
                     public void onDismiss(MaterialShowcaseView materialShowcaseView, int i) {
-                        SharedPrefUtils.instance(MainActivity.this)
-                                .storeBoolean(SharedPrefUtils.KEY_IS_TUTORIAL_SHOWN, true);
+                        PrefUtils.instance(MainActivity.this)
+                                .storeBoolean(PrefUtils.KEY_IS_TUTORIAL_SHOWN, true);
                     }
                 });
         sequence.start();
@@ -488,10 +488,10 @@ public class MainActivity extends AppCompatActivity implements
             super.onPostExecute(bucket);
             progressDialog.dismiss();
             if (bucket != null) {
-                String defaultBucketId = prefUtils.getString(SharedPrefUtils.KEY_DEFAULT_BUCKET_ID, null);
+                String defaultBucketId = prefUtils.getString(PrefUtils.KEY_DEFAULT_BUCKET_ID, null);
                 if (TextUtils.isEmpty(defaultBucketId)) {
                     String bucketId = bucket.getId();
-                    prefUtils.storeString(SharedPrefUtils.KEY_DEFAULT_BUCKET_ID, bucketId);
+                    prefUtils.storeString(PrefUtils.KEY_DEFAULT_BUCKET_ID, bucketId);
                     bucketAdapter.setDefaultBucketId(bucketId);
                 }
                 bucketAdapter.addItem(bucket);
@@ -516,12 +516,12 @@ public class MainActivity extends AppCompatActivity implements
         protected void onPostExecute(List<Bucket> buckets) {
             if (buckets != null) {
                 bucketAdapter = new BucketAdapter(MainActivity.this, buckets);
-                String defaultBucketId = prefUtils.getString(SharedPrefUtils.KEY_DEFAULT_BUCKET_ID, null);
+                String defaultBucketId = prefUtils.getString(PrefUtils.KEY_DEFAULT_BUCKET_ID, null);
                 if (TextUtils.isEmpty(defaultBucketId)) {
                     if (buckets.size() > 0) {
                         Bucket bucket = buckets.get(0);
                         defaultBucketId = bucket.getId();
-                        prefUtils.storeString(SharedPrefUtils.KEY_DEFAULT_BUCKET_ID, defaultBucketId);
+                        prefUtils.storeString(PrefUtils.KEY_DEFAULT_BUCKET_ID, defaultBucketId);
                     }
                 }
                 bucketAdapter.setDefaultBucketId(defaultBucketId);
