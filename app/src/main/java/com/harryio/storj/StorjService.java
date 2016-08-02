@@ -57,4 +57,8 @@ public interface StorjService {
     Call<BucketEntry> storeFile(@Header("x-signature") String signature,
                                 @Header("x-pubkey") String pubkey, @Path("id") String id,
                                 @Body BucketEntryModel bucketEntryModel);
+
+    @POST("buckets/{id}/files")
+    Call<BucketEntry> storeFile(@Header("Authorization") String auth, @Path("id") String id,
+                                @Body BucketEntryModel bucketEntryModel);
 }

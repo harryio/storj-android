@@ -91,6 +91,10 @@ public class UploadService extends Service {
         @Override
         protected Void doInBackground(Void... params) {
             try {
+                final PrefUtils prefUtils = PrefUtils.instance(UploadService.this);
+                String username = prefUtils.getString(KEY_USERNAME, "");
+                String password = prefUtils.getString(KEY_PASSWORD, "");
+
                 File encryptedFile = File.createTempFile(file.getName(), null);
                 //todo provide UI for setting encryption password
                 EncryptUtils.encrypt(file, encryptedFile, "Password");
@@ -98,9 +102,6 @@ public class UploadService extends Service {
                 List<ShardModel> shards = ShardUtils.getShards(encryptedFile);
                 for (int i = 0, length = shards.size(); i < length; ++i) {
                     final ShardModel shardModel = shards.get(i);
-                    final PrefUtils prefUtils = PrefUtils.instance(UploadService.this);
-                    String username = prefUtils.getString(KEY_USERNAME, "");
-                    String password = prefUtils.getString(KEY_PASSWORD, "");
 
                     Shard shard = apiExecutor.createShard(shardModel, frameId, username, password);
 
@@ -143,7 +144,8 @@ public class UploadService extends Service {
                 String bucketId = PrefUtils.instance(UploadService.this)
                         .getString(PrefUtils.KEY_DEFAULT_BUCKET_ID, null);
                 if (bucketId != null) {
-                    BucketEntry bucketEntry = apiExecutor.storeFileInBucket(bucketEntryModel, bucketId);
+                    BucketEntry bucketEntry = apiExecutor.storeFileInBucket(bucketEntryModel,
+                            bucketId, username, password);
                     if (bucketEntry != null) {
                         Log.i(TAG, bucketEntry.toString());
                     }

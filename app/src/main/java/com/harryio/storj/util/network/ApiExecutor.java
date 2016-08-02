@@ -267,4 +267,26 @@ public class ApiExecutor {
 
         return null;
     }
+
+    public BucketEntry storeFileInBucket(BucketEntryModel bucketEntryModel, String bucketId,
+                                         String username, String password) {
+        String authHeader = null;
+        try {
+            authHeader = HeaderGenerator.getAuthHeader(username, password);
+            Call<BucketEntry> call = storjService.storeFile(authHeader, bucketId, bucketEntryModel);
+            Response<BucketEntry> response = call.execute();
+
+            if (response.isSuccessful()) {
+                Log.i(TAG, "storeFileInBucket: call successful");
+                return response.body();
+            } else {
+                Log.e(TAG, "storeFileInBucket: call failed");
+            }
+        } catch (NoSuchAlgorithmException | IOException e) {
+            e.printStackTrace();
+            Log.e(TAG, "storeFileInBucket: call failed", e);
+        }
+
+        return null;
+    }
 }
