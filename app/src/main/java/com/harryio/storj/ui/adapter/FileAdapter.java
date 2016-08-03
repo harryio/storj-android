@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.harryio.storj.R;
@@ -17,6 +18,11 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 
 public class FileAdapter extends ArrayAdapter<StorjFile> {
+    public static final String MIME_TYPE_AUDIO = "audio/";
+    public static final String MIME_TYPE_IMAGE = "image/";
+    public static final String MIME_TYPE_VIDEO = "video/";
+
+
     private LayoutInflater layoutInflater;
 
     public FileAdapter(Context context, List<StorjFile> objects) {
@@ -39,6 +45,20 @@ public class FileAdapter extends ArrayAdapter<StorjFile> {
         fileHolder.nameTextView.setText(storjFile.getFilename());
         fileHolder.capacityTextView.setText(FileUtils.getReadableFileSize(storjFile.getSize()));
 
+        String mimeType = storjFile.getMimetype();
+        int drawableId;
+        if (mimeType.contains(MIME_TYPE_AUDIO)) {
+            drawableId = R.drawable.ic_audio;
+        } else if (mimeType.contains(MIME_TYPE_IMAGE)) {
+            drawableId = R.drawable.ic_image;
+        } else if (mimeType.contains(MIME_TYPE_VIDEO)) {
+            drawableId = R.drawable.ic_video;
+        } else {
+            drawableId = R.drawable.ic_file;
+        }
+
+        fileHolder.imageView.setImageResource(drawableId);
+
         return convertView;
     }
 
@@ -47,6 +67,8 @@ public class FileAdapter extends ArrayAdapter<StorjFile> {
         TextView nameTextView;
         @Bind(R.id.capacity_textView)
         TextView capacityTextView;
+        @Bind(R.id.image)
+        ImageView imageView;
 
         FileHolder(View view) {
             ButterKnife.bind(this, view);
