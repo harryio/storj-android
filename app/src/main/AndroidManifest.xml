@@ -48,6 +48,10 @@
             android:exported="false">
         </service>
 
+        <service android:name=".ui.service.UploadService"
+                 android:exported="false">
+        </service>
+
         <activity android:name=".ui.activity.BucketFilesActivity"
             android:theme="@style/AppTheme.NoActionBar">
         </activity>

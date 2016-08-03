@@ -2,6 +2,10 @@ package com.harryio.storj.util;
 
 import android.util.Log;
 
+import com.google.gson.Gson;
+import com.harryio.storj.model.AuthorizationModel;
+import com.harryio.storj.model.BucketEntryModel;
+import com.harryio.storj.model.Shard;
 import com.harryio.storj.model.ShardModel;
 
 import org.spongycastle.pqc.math.linearalgebra.ByteUtils;
@@ -15,7 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ShardUtils {
+public class UploadUtils {
     private static final String TAG = "ShardUtils";
     private static final int NUM_OF_CHALLENGES = 2;
     private static final int SHARD_SIZE = 1024 * 1024 * 8; //8MB
@@ -27,7 +31,7 @@ public class ShardUtils {
         int shardIndex = 0;
 
         List<ShardModel> shards = new ArrayList<>();
-        while((length = fileInputStream.read(buffer)) > 0) {
+        while ((length = fileInputStream.read(buffer)) > 0) {
             File shardFile = File.createTempFile(file.getName() + shardIndex, ".shard");
             FileOutputStream fos = new FileOutputStream(shardFile);
             fos.write(buffer, 0, length);
@@ -59,5 +63,24 @@ public class ShardUtils {
         }
 
         return shards;
+    }
+
+    public static BucketEntryModel getBucketEntryModel(File file, String frameId) {
+        String mimetype = FileUtils.getMimeType(file);
+        String filename = file.getName();
+        return new BucketEntryModel(frameId, mimetype, filename);
+    }
+
+    public static String getFarmerAddress(Shard.Farmer farmer) {
+        String port = farmer.getPort();
+        String hostname = farmer.getAddress();
+        return "ws://" + hostname + ":" + port;
+    }
+
+    public static String getAuthJson(Shard shard) {
+        AuthorizationModel authModel = new AuthorizationModel(
+                shard.getHash(), shard.getOperation(), shard.getToken());
+        Gson gson = new Gson();
+        return gson.toJson(authModel, AuthorizationModel.class);
     }
 }

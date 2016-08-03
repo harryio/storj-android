@@ -6,10 +6,11 @@ import android.support.v4.app.NotificationCompat;
 import com.harryio.storj.R;
 
 public class UploadNotification extends AbstractNotification {
-    private static final int UPLOAD_NOTIFICATION_ID = 1;
+    public static final int UPLOAD_NOTIFICATION_ID = 1;
 
     public UploadNotification(Context context) {
         super(context);
+        update(1);
     }
 
     @Override

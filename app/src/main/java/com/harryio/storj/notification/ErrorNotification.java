@@ -6,21 +6,21 @@ import android.support.v4.app.NotificationCompat;
 import com.harryio.storj.R;
 
 public class ErrorNotification extends AbstractNotification {
-    private static final int ERROR_NOTIFICATION_ID = 3;
-
     private NotificationCompat.Builder builder;
+    private int notificationId;
 
-    public ErrorNotification(Context context) {
+    public ErrorNotification(Context context, int notificationId) {
         super(context);
         builder = new NotificationCompat.Builder(context)
                 .setContentTitle(context.getString(R.string.app_name))
                 .setSmallIcon(R.drawable.ic_error)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+        this.notificationId = notificationId;
     }
 
     @Override
     protected int getNotificationId() {
-        return ERROR_NOTIFICATION_ID;
+        return notificationId;
     }
 
     public ErrorNotification setError(String errorMessage) {

@@ -21,7 +21,7 @@ public class UploadSuccessfulNotification extends AbstractNotification {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
 
         builder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .setSmallIcon(R.drawable.ic_cloud_upload)
+                .setSmallIcon(R.drawable.ic_cloud_done)
                 .setContentTitle(numberOfItems > 1 ? "Upload files" : "Upload file")
                 .setContentText(numberOfItems > 1 ?
                         numberOfItems + " files successfully uploaded" :
