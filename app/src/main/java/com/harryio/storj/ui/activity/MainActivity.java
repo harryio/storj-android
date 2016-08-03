@@ -20,7 +20,6 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
-import android.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -42,7 +41,6 @@ import com.harryio.storj.util.network.ApiExecutor;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -84,7 +82,6 @@ public class MainActivity extends AppCompatActivity implements
     private ApiExecutor apiExecutor;
     private PrefUtils prefUtils;
     private File imageFolder;
-    private ProgressDialog deleteProgressDialog;
     private boolean bound = false;
     private BucketAdapter bucketAdapter;
     private Uri fileUri;
@@ -195,47 +192,6 @@ public class MainActivity extends AppCompatActivity implements
         } else {
             showErrorView("No internet connection");
         }
-    }
-
-    /*
-    Show files deletion progress in a dialog
-     */
-    private void deleteFiles(final ArrayList<File> toBeDeletedFiles, final ActionMode mode) {
-        String message = toBeDeletedFiles.size() == 1 ? "Are you sure you want to " +
-                "delete this item?" : "Are you sure you want to delete selected items?";
-
-        new AlertDialog.Builder(this)
-                .setMessage(message)
-                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        deleteProgressDialog = new ProgressDialog(MainActivity.this);
-                        deleteProgressDialog.setTitle("Deleting Files");
-                        deleteProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                        deleteProgressDialog.setCancelable(false);
-                        deleteProgressDialog.setIndeterminate(false);
-                        deleteProgressDialog.setMax(toBeDeletedFiles.size());
-                        deleteProgressDialog.setProgress(0);
-                        deleteProgressDialog.show();
-
-                        final int size = toBeDeletedFiles.size();
-                        for (int i = 0; i < size; i++) {
-                            File file = toBeDeletedFiles.get(i);
-                            boolean isDeleted = file.delete();
-
-                            if (!isDeleted) {
-                                showMessage("Delete Failed: " + file.getName());
-                            }
-
-                            deleteProgressDialog.setProgress(i + 1);
-                        }
-
-                        deleteProgressDialog.dismiss();
-                        mode.finish();
-                    }
-                })
-                .setNegativeButton(android.R.string.no, null)
-                .show();
     }
 
     /**
@@ -400,6 +356,7 @@ public class MainActivity extends AppCompatActivity implements
         final EditText capacityEdittext = (EditText) view.findViewById(R.id.bucket_capacity_editText);
         final EditText transferEdittext = (EditText) view.findViewById(R.id.bucket_transfer_editText);
 
+        //noinspection deprecation
         final AlertDialog dialog = new AlertDialog.Builder(this, R.style.StorjDialog)
                 .setTitle("Create new bucket")
                 .setView(view, 80, 20, 80, 0)
