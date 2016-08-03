@@ -9,6 +9,7 @@ import android.widget.TextView;
 
 import com.harryio.storj.R;
 import com.harryio.storj.model.StorjFile;
+import com.harryio.storj.util.FileUtils;
 
 import java.util.List;
 
@@ -36,7 +37,7 @@ public class FileAdapter extends ArrayAdapter<StorjFile> {
 
         StorjFile storjFile = getItem(position);
         fileHolder.nameTextView.setText(storjFile.getFilename());
-        fileHolder.capacityTextView.setText(String.valueOf(storjFile.getSize()));
+        fileHolder.capacityTextView.setText(FileUtils.getReadableFileSize(storjFile.getSize()));
 
         return convertView;
     }
