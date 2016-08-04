@@ -38,7 +38,7 @@ public class UploadUtils {
             fos.close();
 
             final byte[] shardBytes = Arrays.copyOf(buffer, length);
-            String hash = new String(Crypto.hexRmd160Digest(Crypto.sha256Digest(shardBytes)));
+            String hash = new String(Crypto.hexRmd160Digest(Crypto.hexSha256Digest(shardBytes)));
             Log.i(TAG, "Hash: " + hash);
 
             String[] challenges = new String[NUM_OF_CHALLENGES];

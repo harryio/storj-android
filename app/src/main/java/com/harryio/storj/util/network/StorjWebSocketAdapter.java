@@ -5,7 +5,6 @@ import android.util.Log;
 import com.harryio.storj.util.FileUtils;
 import com.neovisionaries.ws.client.WebSocket;
 import com.neovisionaries.ws.client.WebSocketAdapter;
-import com.neovisionaries.ws.client.WebSocketException;
 import com.neovisionaries.ws.client.WebSocketFrame;
 
 import java.io.File;
@@ -27,15 +26,11 @@ public class StorjWebSocketAdapter extends WebSocketAdapter {
     }
 
     @Override
-    public void onTextFrame(WebSocket websocket, WebSocketFrame frame) throws Exception {
-        super.onTextFrame(websocket, frame);
-        Log.i(TAG, "onTextFrame: " + frame.toString());
-    }
-
-    @Override
     public void onTextMessage(WebSocket websocket, String text) throws Exception {
         super.onTextMessage(websocket, text);
         Log.i(TAG, "Text received from socket:\n" + text);
+
+        latch.countDown();
     }
 
     @Override
@@ -46,21 +41,15 @@ public class StorjWebSocketAdapter extends WebSocketAdapter {
     }
 
     @Override
-    public void onError(WebSocket websocket, WebSocketException cause) throws Exception {
-        super.onError(websocket, cause);
-        Log.e(TAG, "Web Socket error", cause);
-    }
-
-    @Override
     public void onConnected(WebSocket websocket, Map<String, List<String>> headers) throws Exception {
         super.onConnected(websocket, headers);
         Log.i(TAG, "onConnected: ");
-        websocket.sendText(authJson, true);
+        websocket.sendText(authJson);
 
         File shardFile = new File(shardFilePath);
         byte[] shardBytes = FileUtils.fileToByteArray(shardFile);
         Log.i(TAG, "Shard bytes length: " + shardBytes.length);
 
-        websocket.sendBinary(shardBytes, true);
+        websocket.sendBinary(shardBytes);
     }
 }
