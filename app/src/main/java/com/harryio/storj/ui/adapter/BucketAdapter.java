@@ -1,6 +1,7 @@
 package com.harryio.storj.ui.adapter;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,19 +11,25 @@ import android.widget.TextView;
 
 import com.harryio.storj.R;
 import com.harryio.storj.model.Bucket;
+import com.harryio.storj.util.PrefUtils;
 
 import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
 
+import static com.harryio.storj.util.PrefUtils.KEY_DEFAULT_BUCKET_ID;
+
 public class BucketAdapter extends BaseAdapter {
+    private static final String TAG = "BucketAdapter";
     private LayoutInflater inflater;
     private List<Bucket> buckets;
     private String defaultBucketId;
+    private Context context;
 
     public BucketAdapter(Context context, List<Bucket> buckets) {
         inflater = LayoutInflater.from(context);
+        this.context = context;
         this.buckets = buckets;
     }
 
@@ -48,6 +55,23 @@ public class BucketAdapter extends BaseAdapter {
 
     public void addItem(Bucket bucket) {
         buckets.add(bucket);
+        notifyDataSetChanged();
+    }
+
+    public void removeItem(Bucket bucket) {
+        Log.i(TAG, "Size before removing: " + buckets.size());
+        buckets.remove(bucket);
+        Log.i(TAG, "Size after removing: " + buckets.size());
+
+        if (bucket.getId().equals(defaultBucketId)) {
+            final PrefUtils prefUtils = PrefUtils.instance(context);
+            if (buckets.size() > 0) {
+                defaultBucketId = buckets.get(0).getId();
+                prefUtils.storeString(KEY_DEFAULT_BUCKET_ID, defaultBucketId);
+            } else {
+                prefUtils.storeString(KEY_DEFAULT_BUCKET_ID, null);
+            }
+        }
         notifyDataSetChanged();
     }
 

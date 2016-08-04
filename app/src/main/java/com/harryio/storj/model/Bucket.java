@@ -1,5 +1,8 @@
 package com.harryio.storj.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -7,7 +10,18 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
-public class Bucket {
+public class Bucket implements Parcelable {
+    public static final Parcelable.Creator<Bucket> CREATOR = new Parcelable.Creator<Bucket>() {
+        @Override
+        public Bucket createFromParcel(Parcel source) {
+            return new Bucket(source);
+        }
+
+        @Override
+        public Bucket[] newArray(int size) {
+            return new Bucket[size];
+        }
+    };
     int storage;
     int transfer;
     String status;
@@ -16,6 +30,20 @@ public class Bucket {
     String name;
     String created;
     String id;
+
+    public Bucket() {
+    }
+
+    protected Bucket(Parcel in) {
+        this.storage = in.readInt();
+        this.transfer = in.readInt();
+        this.status = in.readString();
+        this.pubkeys = in.createStringArray();
+        this.user = in.readString();
+        this.name = in.readString();
+        this.created = in.readString();
+        this.id = in.readString();
+    }
 
     public int getStorage() {
         return storage;
@@ -76,5 +104,33 @@ public class Bucket {
                 ", created='" + created + '\'' +
                 ", id='" + id + '\'' +
                 '}';
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(this.storage);
+        dest.writeInt(this.transfer);
+        dest.writeString(this.status);
+        dest.writeStringArray(this.pubkeys);
+        dest.writeString(this.user);
+        dest.writeString(this.name);
+        dest.writeString(this.created);
+        dest.writeString(this.id);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Bucket bucket = (Bucket) o;
+
+        return id != null ? id.equals(bucket.id) : bucket.id == null;
+
     }
 }

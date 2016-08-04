@@ -25,4 +25,6 @@
     <string name="splash_text">Welcome to Storj!</string>
     <string name="show_tutorial">Show Tutorial</string>
     <string name="activate_account_message">An email has been sent to your email id. Please check your email for instructions on how to activate your account. This app will not function until you activate your account. Once you have activated your account you can start using this app.</string>
+    <string name="delete_bucket">Delete Bucket</string>
+    <string name="update_bucket">Update Bucket</string>
 </resources>

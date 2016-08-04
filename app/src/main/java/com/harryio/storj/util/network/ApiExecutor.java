@@ -41,6 +41,8 @@ public class ApiExecutor {
     private static final String METHOD_POST = "POST";
     private static final String METHOD_GET = "GET";
     private static final String METHOD_PUT = "PUT";
+    private static final String METHOD_DELETE = "DELETE";
+
     private static ApiExecutor apiExecutor;
     private KeyPairDAO keyPairDAO;
     private HeaderGenerator headerGenerator;
@@ -288,5 +290,23 @@ public class ApiExecutor {
         }
 
         return null;
+    }
+
+    public boolean deleteBucket(String bucketId, String username, String password) {
+        try {
+            String authHeader = HeaderGenerator.getAuthHeader(username, password);
+
+            Call<Void> call = storjService.deleteBucket(authHeader, bucketId);
+            Response<Void> response = call.execute();
+
+            if (response.isSuccessful()) {
+                Log.i(TAG, "deleteBucket: call successful");
+                return true;
+            }
+        } catch (IOException | NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+
+        return false;
     }
 }

@@ -1,21 +1,29 @@
 package com.harryio.storj.ui.activity;
 
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.LocalBroadcastManager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.GridView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.harryio.storj.R;
+import com.harryio.storj.model.Bucket;
 import com.harryio.storj.model.StorjFile;
 import com.harryio.storj.ui.adapter.FileAdapter;
 import com.harryio.storj.util.ConnectionDetector;
+import com.harryio.storj.util.PrefUtils;
 import com.harryio.storj.util.network.ApiExecutor;
 
 import java.util.List;
@@ -23,9 +31,12 @@ import java.util.List;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 
-public class BucketFilesActivity extends AppCompatActivity {
-    private static final String ARG_BUCKET_ID = "com.harryio.ARG_BUCKET_ID";
-    private static final String ARG_BUCKET_NAME = "com.harryio.ARG_BUCKET_NAME";
+import static com.harryio.storj.util.PrefUtils.KEY_PASSWORD;
+import static com.harryio.storj.util.PrefUtils.KEY_USERNAME;
+
+public class BucketFilesActivity extends AppCompatActivity
+        implements Toolbar.OnMenuItemClickListener {
+    private static final String ARG_BUCKET = "com.harryio.BUCKET";
 
     @Bind(R.id.toolbar)
     Toolbar toolbar;
@@ -43,11 +54,13 @@ public class BucketFilesActivity extends AppCompatActivity {
     private String bucketId;
     private String bucketName;
     private ApiExecutor apiExecutor;
+    private Bucket bucket;
+    private ProgressDialog deleteBucketDialog;
+    private PrefUtils prefUtils;
 
-    public static Intent getCallingIntent(Context context, String bucketId, String bucketName) {
+    public static Intent getCallingIntent(Context context, Bucket bucket) {
         Intent intent = new Intent(context, BucketFilesActivity.class);
-        intent.putExtra(ARG_BUCKET_ID, bucketId);
-        intent.putExtra(ARG_BUCKET_NAME, bucketName);
+        intent.putExtra(ARG_BUCKET, bucket);
         return intent;
     }
 
@@ -58,13 +71,23 @@ public class BucketFilesActivity extends AppCompatActivity {
         ButterKnife.bind(this);
 
         Bundle bundle = getIntent().getExtras();
-        bucketId = bundle.getString(ARG_BUCKET_ID);
-        bucketName = bundle.getString(ARG_BUCKET_NAME);
+        bucket = bundle.getParcelable(ARG_BUCKET);
+        bucketId = bucket.getId();
+        bucketName = bucket.getName();
         apiExecutor = ApiExecutor.getInstance(this);
         gridView.setEmptyView(emptyView);
 
+        prefUtils = PrefUtils.instance(this);
+
         setUpToolbar();
+        setUpDialogs();
+
         fetchFiles();
+    }
+
+    private void setUpDialogs() {
+        deleteBucketDialog = new ProgressDialog(this, R.style.StorjDialog);
+        deleteBucketDialog.setMessage("Deleting bucket...");
     }
 
     private void setUpToolbar() {
@@ -75,6 +98,8 @@ public class BucketFilesActivity extends AppCompatActivity {
             }
         });
         toolbar.setTitle(bucketName);
+        toolbar.inflateMenu(R.menu.menu_bucket_files);
+        toolbar.setOnMenuItemClickListener(this);
     }
 
     private void fetchFiles() {
@@ -116,6 +141,37 @@ public class BucketFilesActivity extends AppCompatActivity {
         gridView.setVisibility(View.VISIBLE);
     }
 
+    private void showMessage(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public boolean onMenuItemClick(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_bucket_delete:
+                new AlertDialog.Builder(this, R.style.StorjDialog)
+                        .setMessage("Are you sure you want to delete this bucket?")
+                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                new DeleteBucketTask().execute();
+                            }
+                        })
+                        .setNegativeButton(android.R.string.no, null)
+                        .show();
+                return true;
+        }
+        return true;
+    }
+
+    private void onBucketDeleted() {
+        Intent intent = new Intent("bucket_deleted");
+        intent.putExtra("bucket", bucket);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+        showMessage("Bucket successfully deleted");
+        finish();
+    }
+
     private class FetchFiles extends AsyncTask<Void, Void, List<StorjFile>> {
         @Override
         protected void onPreExecute() {
@@ -135,6 +191,32 @@ public class BucketFilesActivity extends AppCompatActivity {
                 showContentView();
             } else {
                 showErrorView("Network call failed");
+            }
+        }
+    }
+
+    private class DeleteBucketTask extends AsyncTask<Void, Void, Boolean> {
+
+        @Override
+        protected void onPreExecute() {
+            deleteBucketDialog.show();
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... voids) {
+            String username = prefUtils.getString(KEY_USERNAME, "");
+            String password = prefUtils.getString(KEY_PASSWORD, "");
+
+            return apiExecutor.deleteBucket(bucketId, username, password);
+        }
+
+        @Override
+        protected void onPostExecute(Boolean deleted) {
+            deleteBucketDialog.dismiss();
+            if (deleted) {
+                onBucketDeleted();
+            } else {
+                showMessage("Failed to delete bucket");
             }
         }
     }

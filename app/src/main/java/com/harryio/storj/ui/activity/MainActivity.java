@@ -2,8 +2,11 @@ package com.harryio.storj.ui.activity;
 
 import android.Manifest;
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -12,10 +15,12 @@ import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -81,6 +86,15 @@ public class MainActivity extends AppCompatActivity implements
     private BucketAdapter bucketAdapter;
     private Uri fileUri;
 
+    private BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.i(TAG, "Removing bucket");
+            Bucket bucket = intent.getParcelableExtra("bucket");
+            bucketAdapter.removeItem(bucket);
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -100,6 +114,9 @@ public class MainActivity extends AppCompatActivity implements
 
         setUpGridView();
         fetchBuckets();
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(receiver,
+                new IntentFilter("bucket_deleted"));
     }
 
     private void setUpGridView() {
@@ -108,8 +125,7 @@ public class MainActivity extends AppCompatActivity implements
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Bucket bucket = (Bucket) parent.getItemAtPosition(position);
-                Intent intent = BucketFilesActivity.getCallingIntent(MainActivity.this,
-                        bucket.getId(), bucket.getName());
+                Intent intent = BucketFilesActivity.getCallingIntent(MainActivity.this, bucket);
                 startActivity(intent);
             }
         });
@@ -376,6 +392,12 @@ public class MainActivity extends AppCompatActivity implements
         });
 
         dialog.show();
+    }
+
+    @Override
+    protected void onDestroy() {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(receiver);
+        super.onDestroy();
     }
 
     private class CreateBucketTask extends AsyncTask<Void, Void, Bucket> {

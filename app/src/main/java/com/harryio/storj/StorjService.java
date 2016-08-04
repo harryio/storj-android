@@ -16,6 +16,7 @@ import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
 import retrofit2.http.POST;
@@ -61,4 +62,8 @@ public interface StorjService {
     @POST("buckets/{id}/files")
     Call<BucketEntry> storeFile(@Header("Authorization") String auth, @Path("id") String id,
                                 @Body BucketEntryModel bucketEntryModel);
+
+    @DELETE("buckets/{id}")
+    Call<Void> deleteBucket(@Header("Authorization") String authorization,
+                            @Path("id") String id);
 }
