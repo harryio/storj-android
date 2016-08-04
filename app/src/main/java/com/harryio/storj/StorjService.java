@@ -9,6 +9,8 @@ import com.harryio.storj.model.FrameModel;
 import com.harryio.storj.model.Shard;
 import com.harryio.storj.model.ShardModel;
 import com.harryio.storj.model.StorjFile;
+import com.harryio.storj.model.Token;
+import com.harryio.storj.model.TokenModel;
 import com.harryio.storj.model.User;
 import com.harryio.storj.model.UserStatus;
 
@@ -66,4 +68,9 @@ public interface StorjService {
     @DELETE("buckets/{id}")
     Call<Void> deleteBucket(@Header("Authorization") String authorization,
                             @Path("id") String id);
+
+    @POST("buckets/{id}/tokens")
+    Call<Token> createToken(@Header("x-signature") String signature,
+                            @Header("x-pubkey") String pubkey, @Path("id") String id,
+                            @Body TokenModel tokenModel);
 }

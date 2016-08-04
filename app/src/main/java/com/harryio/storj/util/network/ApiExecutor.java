@@ -16,6 +16,8 @@ import com.harryio.storj.model.FrameModel;
 import com.harryio.storj.model.Shard;
 import com.harryio.storj.model.ShardModel;
 import com.harryio.storj.model.StorjFile;
+import com.harryio.storj.model.Token;
+import com.harryio.storj.model.TokenModel;
 import com.harryio.storj.model.User;
 import com.harryio.storj.model.UserStatus;
 import com.harryio.storj.util.Crypto;
@@ -308,5 +310,27 @@ public class ApiExecutor {
         }
 
         return false;
+    }
+
+    public Token createToken(TokenModel tokenModel, String bucketId) {
+        try {
+            String tokenJson = gson.toJson(tokenModel);
+            String signature = headerGenerator.getSignatureHeader(METHOD_POST,
+                    "buckets/" + bucketId + "/tokens", tokenJson);
+            String pubkey = headerGenerator.getPublicKeyHeader();
+
+            Call<Token> call = storjService.createToken(signature, pubkey, bucketId, tokenModel);
+            Response<Token> response = call.execute();
+
+            if (response.isSuccessful()) {
+                Log.i(TAG, "createToken: call successful");
+                return response.body();
+            }
+        } catch (IOException | InvalidKeyException e) {
+            e.printStackTrace();
+            Log.i(TAG, "createToken: call failed", e);
+        }
+
+        return null;
     }
 }
