@@ -11,6 +11,7 @@ import com.harryio.storj.model.Bucket;
 import com.harryio.storj.model.BucketEntry;
 import com.harryio.storj.model.BucketEntryModel;
 import com.harryio.storj.model.CreateBucketModel;
+import com.harryio.storj.model.FilePointer;
 import com.harryio.storj.model.Frame;
 import com.harryio.storj.model.FrameModel;
 import com.harryio.storj.model.Shard;
@@ -33,6 +34,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -169,6 +171,33 @@ public class ApiExecutor {
         } catch (InvalidKeyException | IOException | NullPointerException e) {
             e.printStackTrace();
             Log.e(TAG, "fetchFiles: call failed", e);
+        }
+
+        return null;
+    }
+
+    public List<FilePointer> fetchFilePointers(String bucketId, String fileId, String token) {
+        try {
+            String skip = String.valueOf(0);
+            String limit = String.valueOf(10);
+            String nonce = UUID.randomUUID().toString();
+            String queryString = "skip=" + skip + "&limit=" + limit + "&__nonce=" + nonce;
+
+            String signature = headerGenerator.getSignatureHeader(METHOD_GET, "/buckets/" +
+                    bucketId + "/files/" + fileId, queryString);
+            String publickey = headerGenerator.getPublicKeyHeader();
+
+            Call<List<FilePointer>> call = storjService.fetchFilePointers(signature, publickey, token,
+                    bucketId, fileId, skip, limit, nonce);
+            Response<List<FilePointer>> response = call.execute();
+
+            if (response.isSuccessful()) {
+                Log.i(TAG, "fetchFilePointers: call successful");
+                return response.body();
+            }
+        } catch (InvalidKeyException | IOException e) {
+            e.printStackTrace();
+            Log.e(TAG, "fetchFilePointers: call failed", e);
         }
 
         return null;

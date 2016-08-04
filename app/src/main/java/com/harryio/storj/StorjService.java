@@ -4,6 +4,7 @@ import com.harryio.storj.model.Bucket;
 import com.harryio.storj.model.BucketEntry;
 import com.harryio.storj.model.BucketEntryModel;
 import com.harryio.storj.model.CreateBucketModel;
+import com.harryio.storj.model.FilePointer;
 import com.harryio.storj.model.Frame;
 import com.harryio.storj.model.FrameModel;
 import com.harryio.storj.model.Shard;
@@ -73,4 +74,14 @@ public interface StorjService {
     Call<Token> createToken(@Header("x-signature") String signature,
                             @Header("x-pubkey") String pubkey, @Path("id") String id,
                             @Body TokenModel tokenModel);
+
+    @GET("buckets/{id}/files/{file_id}")
+    Call<List<FilePointer>> fetchFilePointers(@Header("x-signature") String signature,
+                                              @Header("x-pubkey") String pubkey,
+                                              @Header("x-token") String token,
+                                              @Path("id") String bucketId,
+                                              @Path("file_id") String fileId,
+                                              @Query("skip") String skip,
+                                              @Query("limit") String limit,
+                                              @Query("__nonce") String nonce);
 }
