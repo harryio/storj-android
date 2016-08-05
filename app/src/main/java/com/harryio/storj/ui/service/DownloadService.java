@@ -20,6 +20,7 @@ import com.harryio.storj.notification.DownloadNotification;
 import com.harryio.storj.util.network.ApiExecutor;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.harryio.storj.notification.DownloadNotification.DOWNLOAD_NOTIFICATION_ID;
 
@@ -33,7 +34,7 @@ public class DownloadService extends Service {
 
     private DownloadHandler downloadHandler;
     private ApiExecutor apiExecutor;
-    private int numOfFiles;
+    private AtomicInteger numOfFiles = new AtomicInteger();
     private int filesDownloaded;
     private DownloadNotification notification;
 
@@ -73,6 +74,9 @@ public class DownloadService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        numOfFiles.set(numOfFiles.getAndIncrement());
+        notification.update(numOfFiles.get()).show();
+
         String bucketId = intent.getStringExtra(KEY_BUCKET_ID);
         String fileId = intent.getStringExtra(KEY_FILE_ID);
 
@@ -93,9 +97,6 @@ public class DownloadService extends Service {
 
         @Override
         public void handleMessage(Message msg) {
-            numOfFiles++;
-            notification.update(numOfFiles).show();
-
             Bundle bundle = msg.getData();
             String bucketId = bundle.getString(ARG_BUCKET_ID);
             String fileId = bundle.getString(ARG_FILE_ID);
@@ -113,12 +114,12 @@ public class DownloadService extends Service {
                 }
             }
 
-            numOfFiles--;
-            if (numOfFiles == 0) {
+            numOfFiles.set(numOfFiles.getAndDecrement());
+            if (numOfFiles.get() == 0) {
                 stopForeground(true);
                 stopSelf();
             } else {
-                notification.update(numOfFiles).show();
+                notification.update(numOfFiles.get()).show();
             }
         }
     }
