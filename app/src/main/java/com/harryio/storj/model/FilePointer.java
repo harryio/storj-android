@@ -1,10 +1,11 @@
 package com.harryio.storj.model;
 
 public class FilePointer {
+    long size;
     private String hash;
     private String token;
     private String operation;
-    private String channel;
+    private Farmer farmer;
 
     public String getHash() {
         return hash;
@@ -30,21 +31,11 @@ public class FilePointer {
         this.operation = operation;
     }
 
-    public String getChannel() {
-        return channel;
+    public Farmer getFarmer() {
+        return farmer;
     }
 
-    public void setChannel(String channel) {
-        this.channel = channel;
-    }
-
-    @Override
-    public String toString() {
-        return "FilePointer{" +
-                "hash='" + hash + '\'' +
-                ", token='" + token + '\'' +
-                ", operation='" + operation + '\'' +
-                ", channel='" + channel + '\'' +
-                '}';
+    public long getSize() {
+        return size;
     }
 }

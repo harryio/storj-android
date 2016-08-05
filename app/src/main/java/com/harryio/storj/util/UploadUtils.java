@@ -5,7 +5,7 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.harryio.storj.model.AuthorizationModel;
 import com.harryio.storj.model.BucketEntryModel;
-import com.harryio.storj.model.Shard;
+import com.harryio.storj.model.Farmer;
 import com.harryio.storj.model.ShardModel;
 
 import org.spongycastle.pqc.math.linearalgebra.ByteUtils;
@@ -71,15 +71,14 @@ public class UploadUtils {
         return new BucketEntryModel(frameId, mimetype, filename);
     }
 
-    public static String getFarmerAddress(Shard.Farmer farmer) {
-        String port = farmer.getPort();
+    public static String getFarmerAddress(Farmer farmer) {
+        String port = String.valueOf(farmer.getPort());
         String hostname = farmer.getAddress();
         return "ws://" + hostname + ":" + port;
     }
 
-    public static String getAuthJson(Shard shard) {
-        AuthorizationModel authModel = new AuthorizationModel(
-                shard.getHash(), shard.getOperation(), shard.getToken());
+    public static String getAuthJson(String hash, String operation, String token) {
+        AuthorizationModel authModel = new AuthorizationModel(hash, operation, token);
         Gson gson = new Gson();
         return gson.toJson(authModel, AuthorizationModel.class);
     }

@@ -117,7 +117,8 @@ public class UploadService extends Service {
                 Shard shard = apiExecutor.createShard(shardModel, frameId, username, password);
 
                 if (shard != null) {
-                    String authJson = UploadUtils.getAuthJson(shard);
+                    String authJson = UploadUtils.getAuthJson(shard.getHash(),
+                            shard.getOperation(), shard.getToken());
                     String farmerAddress = UploadUtils.getFarmerAddress(shard.getFarmer());
 
                     WebSocket webSocket = new WebSocketFactory()

@@ -10,16 +10,21 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
-import android.util.Log;
 
 import com.harryio.storj.model.FilePointer;
 import com.harryio.storj.model.Operation;
 import com.harryio.storj.model.Token;
 import com.harryio.storj.model.TokenModel;
 import com.harryio.storj.notification.DownloadNotification;
+import com.harryio.storj.util.UploadUtils;
 import com.harryio.storj.util.network.ApiExecutor;
+import com.harryio.storj.util.network.DownloadSocketAdapter;
+import com.neovisionaries.ws.client.WebSocket;
+import com.neovisionaries.ws.client.WebSocketFactory;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.harryio.storj.notification.DownloadNotification.DOWNLOAD_NOTIFICATION_ID;
@@ -67,11 +72,6 @@ public class DownloadService extends Service {
         return null;
     }
 
-    private Token getDownloadToken(String bucketId) {
-        TokenModel tokenModel = new TokenModel(Operation.PULL);
-        return apiExecutor.createToken(tokenModel, bucketId);
-    }
-
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         numOfFiles.set(numOfFiles.getAndIncrement());
@@ -90,6 +90,31 @@ public class DownloadService extends Service {
         return START_REDELIVER_INTENT;
     }
 
+    private Token getDownloadToken(String bucketId) {
+        TokenModel tokenModel = new TokenModel(Operation.PULL);
+        return apiExecutor.createToken(tokenModel, bucketId);
+    }
+
+    private void downloadFile(FilePointer filePointer) {
+        try {
+            String farmerAddress = UploadUtils.getFarmerAddress(filePointer.getFarmer());
+            WebSocket webSocket = new WebSocketFactory().createSocket(farmerAddress);
+
+            String authJson = UploadUtils.getAuthJson(filePointer.getHash(),
+                    filePointer.getOperation(), filePointer.getToken());
+            CountDownLatch latch = new CountDownLatch(1);
+
+            DownloadSocketAdapter listener = new DownloadSocketAdapter(authJson, latch);
+            webSocket.addListener(listener);
+            webSocket.connectAsynchronously();
+
+            latch.await();
+
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     private final class DownloadHandler extends Handler {
         public DownloadHandler(Looper looper) {
             super(looper);
@@ -106,10 +131,8 @@ public class DownloadService extends Service {
                 List<FilePointer> filePointers = apiExecutor
                         .fetchFilePointers(bucketId, fileId, token.getToken());
                 if (filePointers != null) {
-                    Log.i(TAG, "Size of file Pointers: " + filePointers.size());
                     for (int i = 0, size = filePointers.size(); i < size; i++) {
-                        FilePointer filePointer = filePointers.get(i);
-                        Log.i(TAG, "File Pointer: " + filePointer.toString());
+                        downloadFile(filePointers.get(i));
                     }
                 }
             }
