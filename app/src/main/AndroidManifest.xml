@@ -5,7 +5,7 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 
     <application
         android:name=".ui.StorjApplication"
@@ -47,14 +47,21 @@
             android:name=".ui.service.UploadService"
             android:exported="false">
         </service>
-
-        <service android:name=".ui.service.UploadService"
-                 android:exported="false">
+        <service
+            android:name=".ui.service.UploadService"
+            android:exported="false">
         </service>
 
-        <activity android:name=".ui.activity.BucketFilesActivity"
+        <activity
+            android:name=".ui.activity.BucketFilesActivity"
             android:theme="@style/AppTheme.NoActionBar">
         </activity>
+
+        <service
+            android:name=".ui.service.DownloadService"
+            android:enabled="true"
+            android:exported="false">
+        </service>
     </application>
 
 </manifest>

@@ -6,6 +6,7 @@ public class StorjFile {
     String mimetype;
     String filename;
     long size;
+    String id;
 
     public String getHash() {
         return hash;
@@ -25,5 +26,9 @@ public class StorjFile {
 
     public long getSize() {
         return size;
+    }
+
+    public String getId() {
+        return id;
     }
 }

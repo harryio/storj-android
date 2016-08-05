@@ -6,8 +6,8 @@ public class TokenModel {
     String operation;
     String __nonce;
 
-    public TokenModel(String operation) {
-        this.operation = operation;
+    public TokenModel(Operation operation) {
+        this.operation = operation.name();
         this.__nonce = UUID.randomUUID().toString();
     }
 }

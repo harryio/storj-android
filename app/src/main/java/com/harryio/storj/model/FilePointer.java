@@ -37,4 +37,14 @@ public class FilePointer {
     public void setChannel(String channel) {
         this.channel = channel;
     }
+
+    @Override
+    public String toString() {
+        return "FilePointer{" +
+                "hash='" + hash + '\'' +
+                ", token='" + token + '\'' +
+                ", operation='" + operation + '\'' +
+                ", channel='" + channel + '\'' +
+                '}';
+    }
 }

@@ -16,14 +16,15 @@ import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 public class FileAdapter extends ArrayAdapter<StorjFile> {
     public static final String MIME_TYPE_AUDIO = "audio/";
     public static final String MIME_TYPE_IMAGE = "image/";
     public static final String MIME_TYPE_VIDEO = "video/";
 
-
     private LayoutInflater layoutInflater;
+    private ItemClickListener itemClickListener;
 
     public FileAdapter(Context context, List<StorjFile> objects) {
         super(context, 0, objects);
@@ -35,13 +36,14 @@ public class FileAdapter extends ArrayAdapter<StorjFile> {
         FileHolder fileHolder;
         if (convertView == null) {
             convertView = layoutInflater.inflate(R.layout.file_grid_item, parent, false);
-            fileHolder = new FileHolder(convertView);
+            fileHolder = new FileHolder(convertView, itemClickListener);
             convertView.setTag(fileHolder);
         } else {
             fileHolder = (FileHolder) convertView.getTag();
         }
 
         StorjFile storjFile = getItem(position);
+        fileHolder.setItem(storjFile);
         fileHolder.nameTextView.setText(storjFile.getFilename());
         fileHolder.capacityTextView.setText(FileUtils.getReadableFileSize(storjFile.getSize()));
 
@@ -62,6 +64,14 @@ public class FileAdapter extends ArrayAdapter<StorjFile> {
         return convertView;
     }
 
+    public void setItemClickListener(ItemClickListener itemClickListener) {
+        this.itemClickListener = itemClickListener;
+    }
+
+    public interface ItemClickListener {
+        void onClick(StorjFile storjFile);
+    }
+
     static class FileHolder {
         @Bind(R.id.name_textView)
         TextView nameTextView;
@@ -70,8 +80,23 @@ public class FileAdapter extends ArrayAdapter<StorjFile> {
         @Bind(R.id.image)
         ImageView imageView;
 
-        FileHolder(View view) {
+        private StorjFile storjFile;
+        private ItemClickListener itemClickListener;
+
+        FileHolder(View view, ItemClickListener itemClickListener) {
             ButterKnife.bind(this, view);
+            this.itemClickListener = itemClickListener;
+        }
+
+        void setItem(StorjFile storjFile) {
+            this.storjFile = storjFile;
+        }
+
+        @OnClick(R.id.rootView)
+        public void onClick() {
+            if (itemClickListener != null) {
+                itemClickListener.onClick(storjFile);
+            }
         }
     }
 }

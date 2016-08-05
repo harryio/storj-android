@@ -22,6 +22,7 @@ import com.harryio.storj.R;
 import com.harryio.storj.model.Bucket;
 import com.harryio.storj.model.StorjFile;
 import com.harryio.storj.ui.adapter.FileAdapter;
+import com.harryio.storj.ui.service.DownloadService;
 import com.harryio.storj.util.ConnectionDetector;
 import com.harryio.storj.util.PrefUtils;
 import com.harryio.storj.util.network.ApiExecutor;
@@ -172,6 +173,20 @@ public class BucketFilesActivity extends AppCompatActivity
         finish();
     }
 
+    private void onFilesFetched(List<StorjFile> storjFiles) {
+        FileAdapter fileAdapter = new FileAdapter(BucketFilesActivity.this, storjFiles);
+        fileAdapter.setItemClickListener(new FileAdapter.ItemClickListener() {
+            @Override
+            public void onClick(StorjFile storjFile) {
+                Toast.makeText(BucketFilesActivity.this, "Starting service", Toast.LENGTH_SHORT).show();
+                startService(DownloadService.getCallingIntent(BucketFilesActivity.this,
+                        bucketId, storjFile.getId()));
+            }
+        });
+        gridView.setAdapter(fileAdapter);
+        showContentView();
+    }
+
     private class FetchFiles extends AsyncTask<Void, Void, List<StorjFile>> {
         @Override
         protected void onPreExecute() {
@@ -186,9 +201,7 @@ public class BucketFilesActivity extends AppCompatActivity
         @Override
         protected void onPostExecute(List<StorjFile> storjFiles) {
             if (storjFiles != null) {
-                FileAdapter fileAdapter = new FileAdapter(BucketFilesActivity.this, storjFiles);
-                gridView.setAdapter(fileAdapter);
-                showContentView();
+                onFilesFetched(storjFiles);
             } else {
                 showErrorView("Network call failed");
             }

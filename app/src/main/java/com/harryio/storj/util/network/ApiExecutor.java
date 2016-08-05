@@ -176,33 +176,6 @@ public class ApiExecutor {
         return null;
     }
 
-    public List<FilePointer> fetchFilePointers(String bucketId, String fileId, String token) {
-        try {
-            String skip = String.valueOf(0);
-            String limit = String.valueOf(10);
-            String nonce = UUID.randomUUID().toString();
-            String queryString = "skip=" + skip + "&limit=" + limit + "&__nonce=" + nonce;
-
-            String signature = headerGenerator.getSignatureHeader(METHOD_GET, "/buckets/" +
-                    bucketId + "/files/" + fileId, queryString);
-            String publickey = headerGenerator.getPublicKeyHeader();
-
-            Call<List<FilePointer>> call = storjService.fetchFilePointers(signature, publickey, token,
-                    bucketId, fileId, skip, limit, nonce);
-            Response<List<FilePointer>> response = call.execute();
-
-            if (response.isSuccessful()) {
-                Log.i(TAG, "fetchFilePointers: call successful");
-                return response.body();
-            }
-        } catch (InvalidKeyException | IOException e) {
-            e.printStackTrace();
-            Log.e(TAG, "fetchFilePointers: call failed", e);
-        }
-
-        return null;
-    }
-
     public Frame createFrame(FrameModel frameModel) {
         try {
             String frameModelJson = gson.toJson(frameModel);
@@ -303,9 +276,8 @@ public class ApiExecutor {
 
     public BucketEntry storeFileInBucket(BucketEntryModel bucketEntryModel, String bucketId,
                                          String username, String password) {
-        String authHeader = null;
         try {
-            authHeader = HeaderGenerator.getAuthHeader(username, password);
+            String authHeader = HeaderGenerator.getAuthHeader(username, password);
             Call<BucketEntry> call = storjService.storeFile(authHeader, bucketId, bucketEntryModel);
             Response<BucketEntry> response = call.execute();
 
@@ -345,7 +317,7 @@ public class ApiExecutor {
         try {
             String tokenJson = gson.toJson(tokenModel);
             String signature = headerGenerator.getSignatureHeader(METHOD_POST,
-                    "buckets/" + bucketId + "/tokens", tokenJson);
+                    "/buckets/" + bucketId + "/tokens", tokenJson);
             String pubkey = headerGenerator.getPublicKeyHeader();
 
             Call<Token> call = storjService.createToken(signature, pubkey, bucketId, tokenModel);
@@ -358,6 +330,33 @@ public class ApiExecutor {
         } catch (IOException | InvalidKeyException e) {
             e.printStackTrace();
             Log.i(TAG, "createToken: call failed", e);
+        }
+
+        return null;
+    }
+
+    public List<FilePointer> fetchFilePointers(String bucketId, String fileId, String token) {
+        try {
+            String skip = String.valueOf(0);
+            String limit = String.valueOf(10);
+            String nonce = UUID.randomUUID().toString();
+            String queryString = "skip=" + skip + "&limit=" + limit + "&__nonce=" + nonce;
+
+            String signature = headerGenerator.getSignatureHeader(METHOD_GET, "/buckets/" +
+                    bucketId + "/files/" + fileId, queryString);
+            String publickey = headerGenerator.getPublicKeyHeader();
+
+            Call<List<FilePointer>> call = storjService.fetchFilePointers(signature, publickey, token,
+                    bucketId, fileId, skip, limit, nonce);
+            Response<List<FilePointer>> response = call.execute();
+
+            if (response.isSuccessful()) {
+                Log.i(TAG, "fetchFilePointers: call successful");
+                return response.body();
+            }
+        } catch (InvalidKeyException | IOException e) {
+            e.printStackTrace();
+            Log.e(TAG, "fetchFilePointers: call failed", e);
         }
 
         return null;
