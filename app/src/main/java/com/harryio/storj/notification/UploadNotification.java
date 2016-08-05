@@ -10,7 +10,7 @@ public class UploadNotification extends AbstractNotification {
 
     public UploadNotification(Context context) {
         super(context);
-        update(1);
+        update(0);
     }
 
     @Override
@@ -18,17 +18,17 @@ public class UploadNotification extends AbstractNotification {
         return UPLOAD_NOTIFICATION_ID;
     }
 
-    public UploadNotification update(int numberOfItems) {
+    public UploadNotification update(int numOfFiles) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
 
         builder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setOngoing(true)
                 .setSmallIcon(R.drawable.ic_cloud_upload)
-                .setContentTitle(numberOfItems > 1 ? "Uploading files" : "Uploading file")
+                .setContentTitle(numOfFiles > 1 ? "Uploading files" : "Uploading file")
                 .setProgress(0, 0, true);
 
-        if (numberOfItems > 1) {
-            builder.setContentText(numberOfItems + " queued");
+        if (numOfFiles > 1) {
+            builder.setContentText(String.valueOf(numOfFiles - 1) + " queued");
         }
 
         notification = builder.build();
